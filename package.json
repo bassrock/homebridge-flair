@@ -1,55 +1,44 @@
 {
+  "private": true,
+  "displayName": "Homebridge Flair",
   "name": "homebridge-flair",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Brings the flair smart vents into homekit",
+  "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bassrock/homebridge-flair.git"
+    "url": "git://github.com/bassrock/homebridge-flair.git"
   },
-  "author": "",
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/bassrock/homebridge-flair/issues"
   },
-  "homepage": "https://github.com/bassrock/homebridge-flair#readme",
+  "engines": {
+    "node": ">=10.17.0",
+    "homebridge": ">0.4.53"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "lint": "eslint src/**",
+    "watch": "npm run build && npm link && nodemon",
+    "build": "rimraf ./dist && tsc",
+    "prepublishOnly": "npm run lint && npm run build"
+  },
   "keywords": [
-    "homebridge-flair",
+    "homebridge-plugin",
     "flair"
   ],
-  "engines": {
-    "node": ">=6.0.0",
-    "homebridge": ">=0.4.38"
+  "dependencies": {
+    "flair-api-ts": "0.0.3"
   },
-  "scripts": {
-    "build": "rimraf dist/ && babel src/ --out-dir dist/ --source-maps",
-    "dropcache": "rm /usr/local/lib/node_modules/homebridge/node_modules/node-persist/storage/accessories/cachedAccessories",
-    "lint": "eslint .",
-    "prettier": "prettier --write src/**/*.js",
-    "precommit": "lint-staged",
-    "prepublish": "npm run build",
-    "prestart": "npm run build",
-    "start": "homebridge -D -P . -U ."
-  },
-  "lint-staged": {
-    "*.js": [
-      "prettier --write",
-      "git add"
-    ]
-  },
-  "dependencies": {},
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-eslint": "^8.2.2",
-    "babel-plugin-add-module-exports": "^0.2.1",
-    "babel-preset-env": "^1.6.1",
-    "babel-preset-stage-2": "^6.24.1",
-    "eslint": "^4.18.2",
-    "eslint-config-prettier": "^2.5.0",
-    "eslint-plugin-prettier": "^2.6.0",
-    "husky": "^0.14.3",
-    "lint-staged": "^7.0.0",
-    "prettier": "^1.11.1",
-    "rimraf": "^2.6.2"
+    "@types/node": "^13.13.2",
+    "@typescript-eslint/eslint-plugin": "^2.29.0",
+    "@typescript-eslint/parser": "^2.29.0",
+    "eslint": "^6.8.0",
+    "homebridge": "^0.4.54-beta.54",
+    "nodemon": "^2.0.3",
+    "rimraf": "^3.0.2",
+    "ts-node": "^8.9.0",
+    "typescript": "^3.8.3"
   }
 }
