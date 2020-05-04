@@ -2,7 +2,8 @@ import { APIEvent } from 'homebridge';
 import type { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig } from 'homebridge';
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import { FlairPlatformAccessory } from './platformAccessory';
+import { FlairPuckPlatformAccessory } from './puckPlatformAccessory';
+import { FlairVentPlatformAccessory } from './ventPlatformAccessory';
 
 /**
  * HomebridgePlatform
@@ -31,6 +32,7 @@ export class FlairPlatform implements DynamicPlatformPlugin {
             log.debug('Executed didFinishLaunching callback');
             // run the method to discover / register your devices as accessories
             this.discoverDevices();
+
         });
     }
 
@@ -42,8 +44,8 @@ export class FlairPlatform implements DynamicPlatformPlugin {
         this.log.info('Restoring accessory from cache:', accessory.displayName);
 
         // create the accessory handler
-        // this is imported from `platformAccessory.ts`
-        new FlairPlatformAccessory(this, accessory);
+        // this is imported from `puckPlatformAccessory.ts`
+        new FlairPuckPlatformAccessory(this, accessory);
 
         // add the restored accessory to the accessories cache so we can track if it has already been registered
         this.accessories.push(accessory);
@@ -61,14 +63,18 @@ export class FlairPlatform implements DynamicPlatformPlugin {
         // or a user-defined array in the platform config.
         const exampleDevices = [
             {
-                exampleUniqueId: 'ABCD',
-                exampleDisplayName: 'Bedroom',
+                exampleUniqueId: 'ABCDF',
+                exampleDisplayName: 'Puck',
+                type: 'puck'
             },
             {
-                exampleUniqueId: 'EFGH',
-                exampleDisplayName: 'Kitchen',
+                exampleUniqueId: 'EFGHF',
+                exampleDisplayName: 'Vent',
+                type: 'vent'
             },
         ];
+
+        const currentUUIDs : string[] = [];
 
         // loop over the discovered devices and register each one if it has not already been registered
         for (const device of exampleDevices) {
@@ -77,6 +83,7 @@ export class FlairPlatform implements DynamicPlatformPlugin {
             // something globally unique, but constant, for example, the device serial
             // number or MAC address
             const uuid = this.api.hap.uuid.generate(device.exampleUniqueId);
+            currentUUIDs.push(uuid);
 
             // check that the device has not already been registered by checking the
             // cached devices we stored in the `configureAccessory` method above
@@ -90,9 +97,17 @@ export class FlairPlatform implements DynamicPlatformPlugin {
                 // the `context` property can be used to store any data about the accessory you may need
                 accessory.context.device = device;
 
+                let flairAccessory;
+
                 // create the accessory handler
-                // this is imported from `platformAccessory.ts`
-                new FlairPlatformAccessory(this, accessory);
+                // this is imported from `puckPlatformAccessory.ts`
+                if (device.type === 'puck') {
+                   flairAccessory = new FlairPuckPlatformAccessory(this, accessory);
+                } else if (device.type === 'vent') {
+                    flairAccessory = new FlairVentPlatformAccessory(this, accessory);
+                } else {
+                    continue;
+                }
 
                 // link the accessory to your platform
                 this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
@@ -102,8 +117,18 @@ export class FlairPlatform implements DynamicPlatformPlugin {
 
                 // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, eg.:
                 // this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+            } else {
+                this.log.debug('Discovered accessory already exists:', device.exampleDisplayName)
             }
         }
 
+        //Loop over the current uuid's and if they don't exist then remove them.
+        for (const accessory of this.accessories) {
+            if (!currentUUIDs.find(uuid => uuid === accessory.UUID)) {
+                this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME,[accessory]);
+                delete this.accessories[this.accessories.indexOf(accessory, 0)];
+                this.log.debug('Removing not found device:', accessory.displayName)
+            }
+        }
     }
 }
