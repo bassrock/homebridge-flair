@@ -1,15 +1,21 @@
 {
-  "pluginAlias": "FlairHomebridgePlugin",
+  "pluginAlias": "Flair",
   "pluginType": "platform",
   "singular": true,
   "schema": {
     "type": "object",
     "properties": {
-      "name": {
-        "title": "Name",
+      "clientId": {
+        "title": "Client ID",
         "type": "string",
         "required": true,
-        "default": "Flair Platform"
+        "default": ""
+      },
+      "clientSecret": {
+        "title": "Client Secret",
+        "type": "string",
+        "required": true,
+        "default": ""
       }
     }
   }
