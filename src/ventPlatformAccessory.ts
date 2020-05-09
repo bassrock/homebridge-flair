@@ -9,6 +9,7 @@ import {CharacteristicEventTypes} from 'homebridge';
 import {FlairPlatform} from './platform';
 import Client from "flair-api-ts/lib/client";
 import {Vent} from "flair-api-ts/lib/client/models";
+import {Pressure, PressureSensor} from "./Pressure";
 
 /**
  * Platform Accessory
@@ -18,6 +19,7 @@ import {Vent} from "flair-api-ts/lib/client/models";
 export class FlairVentPlatformAccessory {
     private windowService: Service;
     private temperatureService: Service;
+    private pressureService: Service;
     private accessoryInformationService: Service;
 
     private vent: Vent;
@@ -37,36 +39,36 @@ export class FlairVentPlatformAccessory {
             .setCharacteristic(this.platform.Characteristic.Model, 'Vent')
             .setCharacteristic(this.platform.Characteristic.SerialNumber, this.vent.id!);
 
-        // get the LightBulb service if it exists, otherwise create a new LightBulb service
-        // you can create multiple services for each accessory
+        // We fake a vent as a window covering.
         this.windowService = this.accessory.getService(this.platform.Service.WindowCovering) ?? this.accessory.addService(this.platform.Service.WindowCovering);
+        this.windowService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
+        this.windowService.setPrimaryService(true)
+
+        //Add our temperature sensor
         this.temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor) ?? this.accessory.addService(this.platform.Service.TemperatureSensor);
+        this.temperatureService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
+        this.temperatureService.setCharacteristic(this.platform.Characteristic.CurrentTemperature, this.vent.ductTemperatureC);
         this.windowService.addLinkedService(this.temperatureService);
 
-        this.temperatureService.setCharacteristic(this.platform.Characteristic.CurrentTemperature, this.vent.ductTemperatureC);
+        //Add our custom pressure sensor
+        this.pressureService = this.accessory.getService(PressureSensor) ?? this.accessory.addService(PressureSensor);
+        this.pressureService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
+        this.pressureService.setCharacteristic(Pressure, this.vent.ductPressure);
+        this.windowService.addLinkedService(this.pressureService);
 
-        // To avoid "Cannot add a Service with the same UUID another Service without also defining a unique 'subtype' property." error,
-        // when creating multiple services of the same type, you need to use the following syntax to specify a name and subtype id:
-        // this.accessory.getService('NAME') ?? this.accessory.addService(this.platform.Service.Lightbulb, 'NAME', 'USER_DEFINED_SUBTYPE');
-
-        // set the service name, this is what is displayed as the default name on the Home app
-        // in this example we are using the name we stored in the `accessory.context` in the `discoverDevices` method.
-        this.windowService.setCharacteristic(this.platform.Characteristic.Name, this.vent.name!);
         this.windowService.setCharacteristic(this.platform.Characteristic.TargetPosition, this.vent.percentOpen)
         this.windowService.setCharacteristic(this.platform.Characteristic.CurrentPosition, this.vent.percentOpen)
         this.windowService.setCharacteristic(this.platform.Characteristic.PositionState, this.platform.Characteristic.PositionState.STOPPED)
-
-
-        // each service must implement at-minimum the "required characteristics" for the given service type
-        // see https://github.com/homebridge/HAP-NodeJS/blob/master/src/lib/gen/HomeKit.ts
-
         this.windowService.getCharacteristic(this.platform.Characteristic.TargetPosition)
             .on(CharacteristicEventTypes.SET, this.setTargetPosition.bind(this))
             .on(CharacteristicEventTypes.GET, this.getTargetPosition.bind(this))
 
+
+
         setInterval(async () => {
             await this.getNewVentReadings()
-        }, 30 * 1000);
+        }, platform.config.pollInterval * 1000);
+        this.getNewVentReadings()
     }
 
     /**
@@ -100,17 +102,21 @@ export class FlairVentPlatformAccessory {
         this.accessory.context.device = vent;
         this.vent = vent;
 
-        // push the new value to HomeKit
         this.temperatureService.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.vent.ductTemperatureC);
+
+        this.pressureService.updateCharacteristic(Pressure, this.vent.ductPressure);
 
         this.windowService.updateCharacteristic(this.platform.Characteristic.TargetPosition, this.vent.percentOpen);
         this.windowService.updateCharacteristic(this.platform.Characteristic.CurrentPosition, this.vent.percentOpen);
         this.windowService.updateCharacteristic(this.platform.Characteristic.PositionState, this.platform.Characteristic.PositionState.STOPPED)
 
-        this.accessory.getService(this.platform.Service.AccessoryInformation)!
-            .updateCharacteristic(this.platform.Characteristic.FirmwareRevision, this.vent.firmwareVersionS)
+        this.accessoryInformationService.updateCharacteristic(this.platform.Characteristic.FirmwareRevision, this.vent.firmwareVersionS)
 
-        this.platform.log.debug(`Pushed updated current temperature state for ${this.vent.name!} to HomeKit, open ${this.vent.percentOpen}:`, this.vent.ductTemperatureC);
+        this.platform.log.debug(`Pushed updated state for vent: ${this.vent.name!} to HomeKit`, {
+            open: this.vent.percentOpen,
+            pressure: this.vent.ductPressure,
+            temperature: this.vent.ductTemperatureC
+        });
     }
 
 }

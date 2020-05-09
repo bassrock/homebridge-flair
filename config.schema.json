@@ -28,6 +28,12 @@
         "type": "string",
         "required": true,
         "default": ""
+      },
+      "pollInterval": {
+        "title": "Poll Interval",
+        "type": "number",
+        "required": true,
+        "default": 60
       }
     }
   }
