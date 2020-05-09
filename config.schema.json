@@ -16,6 +16,18 @@
         "type": "string",
         "required": true,
         "default": ""
+      },
+      "username": {
+        "title": "useranme",
+        "type": "string",
+        "required": true,
+        "default": ""
+      },
+      "password": {
+        "title": "password",
+        "type": "string",
+        "required": true,
+        "default": ""
       }
     }
   }

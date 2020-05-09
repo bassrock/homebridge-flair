@@ -28,7 +28,7 @@
     "flair"
   ],
   "dependencies": {
-    "flair-api-ts": "0.0.3"
+    "flair-api-ts": "0.0.8"
   },
   "devDependencies": {
     "@types/node": "^13.13.2",
