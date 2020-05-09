@@ -5,9 +5,9 @@ import {PLATFORM_NAME, PLUGIN_NAME} from './settings';
 import {FlairPuckPlatformAccessory} from './puckPlatformAccessory';
 import {FlairVentPlatformAccessory} from './ventPlatformAccessory';
 import Client from "flair-api-ts/lib/client";
-import {platform} from "os";
 import {Puck, Vent} from "flair-api-ts/lib/client/models";
 import {Model} from "flair-api-ts/lib/client/models/model";
+import {plainToClass} from "class-transformer";
 
 /**
  * HomebridgePlatform
@@ -53,9 +53,11 @@ export class FlairPlatform implements DynamicPlatformPlugin {
 
         if (accessory.context.type == Puck.type) {
             this.log.info('Restoring puck from cache:', accessory.displayName);
+            accessory.context.device = plainToClass(Puck, accessory.context.device)
             new FlairPuckPlatformAccessory(this, accessory, this.client);
         } else if (accessory.context.type == Vent.type) {
             this.log.info('Restoring vent from cache:', accessory.displayName);
+            accessory.context.device = plainToClass(Vent, accessory.context.device)
             new FlairVentPlatformAccessory(this, accessory, this.client);
         }
 
