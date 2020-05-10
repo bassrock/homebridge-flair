@@ -1,4 +1,4 @@
-import {APIEvent, CharacteristicSetCallback, CharacteristicValue} from 'homebridge';
+import {APIEvent} from 'homebridge';
 import type {API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig} from 'homebridge';
 
 import {PLATFORM_NAME, PLUGIN_NAME} from './settings';
@@ -37,6 +37,10 @@ export class FlairPlatform implements DynamicPlatformPlugin {
     ) {
         this.log.debug('Finished initializing platform:', this.config.name);
 
+        if (!this.validConfig()) {
+            throw('The Flair config is no valid.');
+        }
+
         this.client = new Client(this.config.clientId, this.config.clientSecret, this.config.username, this.config.password);
 
         // When this event is fired it means Homebridge has restored all cached accessories from disk.
@@ -54,6 +58,30 @@ export class FlairPlatform implements DynamicPlatformPlugin {
         });
     }
 
+
+    private validConfig() {
+        if (!this.config.clientId) {
+            this.log.error('You need to enter a Flair Client Id')
+            return false;
+        }
+
+        if (!this.config.clientSecret) {
+            this.log.error('You need to enter a Flair Client Id')
+            return false;
+        }
+
+        if (!this.config.username) {
+            this.log.error('You need to enter your flair username')
+            return false;
+        }
+
+        if (!this.config.password) {
+            this.log.error('You need to enter your flair password')
+            return false;
+        }
+
+        return true;
+    }
 
     private async getNewStructureReadings() {
         try {
