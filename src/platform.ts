@@ -4,8 +4,9 @@ import type {API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConf
 import {PLATFORM_NAME, PLUGIN_NAME} from './settings';
 import {FlairPuckPlatformAccessory} from './puckPlatformAccessory';
 import {FlairVentPlatformAccessory} from './ventPlatformAccessory';
+import {FlairRoomPlatformAccessory} from './roomPlatformAccessory';
 import Client from "flair-api-ts/lib/client";
-import {Puck, Vent} from "flair-api-ts/lib/client/models";
+import {Puck, Vent, Room} from "flair-api-ts/lib/client/models";
 import {Model} from "flair-api-ts/lib/client/models/model";
 import {plainToClass} from "class-transformer";
 
@@ -59,6 +60,10 @@ export class FlairPlatform implements DynamicPlatformPlugin {
             this.log.info('Restoring vent from cache:', accessory.displayName);
             accessory.context.device = plainToClass(Vent, accessory.context.device)
             new FlairVentPlatformAccessory(this, accessory, this.client);
+        } else if (accessory.context.type == Room.type) {
+            this.log.info('Restoring room from cache:', accessory.displayName);
+            accessory.context.device = plainToClass(Room, accessory.context.device)
+            new FlairRoomPlatformAccessory(this, accessory, this.client);
         }
 
         // add the restored accessory to the accessories cache so we can track if it has already been registered
@@ -72,12 +77,15 @@ export class FlairPlatform implements DynamicPlatformPlugin {
      */
     async discoverDevices() {
         let currentUUIDs: string[] = [];
-        let uuids : [string[], string[]] = await Promise.all([
+        let uuids : [string[], string[], string[]] = await Promise.all([
             this.addDevices(await this.client.getPucks()),
-            this.addDevices(await this.client.getVents())
+            this.addDevices(await this.client.getVents()),
+            this.addDevices((await this.client.getRooms()).filter((value: Room) => {
+                return value.pucksInactive === 'Active'
+            }) as [Room])
         ]);
 
-        currentUUIDs = currentUUIDs.concat(uuids[0], uuids[1])
+        currentUUIDs = currentUUIDs.concat(uuids[0], uuids[1], uuids[2])
 
 
         //Loop over the current uuid's and if they don't exist then remove them.
@@ -106,7 +114,6 @@ export class FlairPlatform implements DynamicPlatformPlugin {
             // check that the device has not already been registered by checking the
             // cached devices we stored in the `configureAccessory` method above
             if (!this.accessories.find(accessory => accessory.UUID === uuid)) {
-                this.log.info('Registering new accessory:', device.name!);
 
                 // create a new accessory
                 const accessory = new this.api.platformAccessory(device.name!, uuid);
@@ -123,9 +130,13 @@ export class FlairPlatform implements DynamicPlatformPlugin {
                 } else if (device instanceof Vent) {
                     accessory.context.type = Vent.type;
                     new FlairVentPlatformAccessory(this, accessory, this.client);
+                } else if (device instanceof Room) {
+                    accessory.context.type = Room.type;
+                    new FlairRoomPlatformAccessory(this, accessory, this.client);
                 } else {
                     continue;
                 }
+                this.log.info(`Registering new ${accessory.context.type}`, device.name!);
 
                 // link the accessory to your platform
                 this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
