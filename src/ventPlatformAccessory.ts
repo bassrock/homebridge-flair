@@ -10,6 +10,7 @@ import {FlairPlatform} from './platform';
 import Client from "flair-api-ts/lib/client";
 import {Vent} from "flair-api-ts/lib/client/models";
 import {Pressure, PressureSensor} from "./Pressure";
+import {getRandomIntInclusive} from "./utils";
 
 /**
  * Platform Accessory
@@ -67,7 +68,7 @@ export class FlairVentPlatformAccessory {
 
         setInterval(async () => {
             await this.getNewVentReadings()
-        }, platform.config.pollInterval * 1000);
+        }, (platform.config.pollInterval+ getRandomIntInclusive(1,20)) * 1000);
         this.getNewVentReadings()
     }
 

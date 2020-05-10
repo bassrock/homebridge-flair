@@ -5,6 +5,7 @@ import { FlairPlatform } from './platform';
 import {Puck, Vent} from "flair-api-ts/lib/client/models";
 import Client from "flair-api-ts/lib/client";
 import {Pressure, PressureSensor} from "./Pressure";
+import {getRandomIntInclusive} from "./utils";
 
 /**
  * Platform Accessory
@@ -54,7 +55,7 @@ export class FlairPuckPlatformAccessory {
 
         setInterval(async () => {
             await this.getNewPuckReadings()
-        }, platform.config.pollInterval * 1000);
+        }, (platform.config.pollInterval+ getRandomIntInclusive(1,20)) * 1000);
         this.getNewPuckReadings();
     }
 

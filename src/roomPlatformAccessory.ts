@@ -1,11 +1,16 @@
-import { CharacteristicEventTypes } from 'homebridge';
-import type { Service, PlatformAccessory, CharacteristicValue, CharacteristicSetCallback, CharacteristicGetCallback} from 'homebridge';
+import type {PlatformAccessory, Service} from 'homebridge';
+import {
+    CharacteristicEventTypes,
+    CharacteristicGetCallback,
+    CharacteristicSetCallback,
+    CharacteristicValue
+} from 'homebridge';
 
-import { FlairPlatform } from './platform';
-import {Puck, Vent} from "flair-api-ts/lib/client/models";
+import {FlairPlatform} from './platform';
 import Client from "flair-api-ts/lib/client";
-import {Pressure, PressureSensor} from "./Pressure";
 import {Room} from "flair-api-ts/lib/client/models/room";
+import {Vent} from "flair-api-ts/lib/client/models";
+import {getRandomIntInclusive} from "./utils";
 
 /**
  * Platform Accessory
@@ -44,10 +49,31 @@ export class FlairRoomPlatformAccessory {
             .setCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.platform.Characteristic.CurrentHeatingCoolingState.COOL)
             .setCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.room.currentHumidity!)
 
+        this.thermostatService.getCharacteristic(this.platform.Characteristic.TargetTemperature)
+            .on(CharacteristicEventTypes.SET, this.setTargetTemperature.bind(this))
+            .on(CharacteristicEventTypes.GET, this.getTargetTemperature.bind(this))
+
         setInterval(async () => {
             await this.getNewRoomReadings()
-        }, platform.config.pollInterval * 1000);
+        }, (platform.config.pollInterval+ getRandomIntInclusive(1,20)) * 1000);
         this.getNewRoomReadings();
+    }
+
+    setTargetTemperature(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+        let self = this;
+        this.client.setRoomSetPoint(this.room, value as number).then(function (room: Room) {
+            self.updateRoomReadingsFromRoom(room)
+            self.platform.log.debug('Set Characteristic Temperature -> ', value);
+            // you must call the callback function
+            callback(null, room.setPointC);
+        })
+
+    }
+
+    getTargetTemperature(callback: CharacteristicGetCallback) {
+        this.getNewRoomReadings().then(function (room: Room) {
+            callback(null, room.setPointC)
+        })
     }
 
 
