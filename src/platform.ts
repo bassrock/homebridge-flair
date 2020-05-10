@@ -1,4 +1,4 @@
-import {APIEvent} from 'homebridge';
+import {APIEvent, CharacteristicSetCallback, CharacteristicValue} from 'homebridge';
 import type {API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig} from 'homebridge';
 
 import {PLATFORM_NAME, PLUGIN_NAME} from './settings';
@@ -6,9 +6,10 @@ import {FlairPuckPlatformAccessory} from './puckPlatformAccessory';
 import {FlairVentPlatformAccessory} from './ventPlatformAccessory';
 import {FlairRoomPlatformAccessory} from './roomPlatformAccessory';
 import Client from "flair-api-ts/lib/client";
-import {Puck, Vent, Room} from "flair-api-ts/lib/client/models";
+import {Puck, Vent, Room, Structure, FlairMode, StructureHeatCoolMode} from "flair-api-ts/lib/client/models";
 import {Model} from "flair-api-ts/lib/client/models/model";
 import {plainToClass} from "class-transformer";
+import {getRandomIntInclusive} from "./utils";
 
 /**
  * HomebridgePlatform
@@ -23,6 +24,10 @@ export class FlairPlatform implements DynamicPlatformPlugin {
     public readonly accessories: PlatformAccessory[] = [];
 
     private client: Client;
+
+    private structure?: Structure;
+
+    private rooms: [FlairRoomPlatformAccessory?] = []
 
 
     constructor(
@@ -42,7 +47,42 @@ export class FlairPlatform implements DynamicPlatformPlugin {
             log.debug('Executed didFinishLaunching callback');
             // run the method to discover / register your devices as accessories
             await this.discoverDevices();
+
+            setInterval(async () => {
+                await this.getNewStructureReadings()
+            }, (this.config.pollInterval+ getRandomIntInclusive(1,20)) * 1000);
         });
+    }
+
+
+    private async getNewStructureReadings() {
+        let structure = await this.client.getStructure(await this.getStructure());
+        this.updateStructureFromStructureReading(structure);
+    }
+
+    private updateStructureFromStructureReading(structure: Structure) {
+        this.structure = structure;
+        for (const room of this.rooms) {
+            if (room) {
+                room.updateFromStructure(this.structure);
+            }
+        }
+        return this.structure;
+    }
+
+    public async setStructureMode(mode: FlairMode, heatingCoolingMode: StructureHeatCoolMode): Promise<Structure> {
+        let structure = await this.client.setStructureMode(await this.getStructure(), mode);
+        structure = await this.client.setStructureHeatingCoolMode(structure, heatingCoolingMode);
+
+        return this.updateStructureFromStructureReading(structure);
+    }
+
+    private async getStructure(): Promise<Structure> {
+        if (this.structure) {
+            return this.structure!;
+        }
+        this.structure = await this.client.getPrimaryStructure();
+        return this.structure!;
     }
 
     /**
@@ -63,7 +103,10 @@ export class FlairPlatform implements DynamicPlatformPlugin {
         } else if (accessory.context.type == Room.type) {
             this.log.info('Restoring room from cache:', accessory.displayName);
             accessory.context.device = plainToClass(Room, accessory.context.device)
-            new FlairRoomPlatformAccessory(this, accessory, this.client);
+            let self = this;
+            this.getStructure().then((structure: Structure) => {
+                self.rooms.push(new FlairRoomPlatformAccessory(self, accessory, this.client, structure));
+            })
         }
 
         // add the restored accessory to the accessories cache so we can track if it has already been registered
@@ -77,7 +120,7 @@ export class FlairPlatform implements DynamicPlatformPlugin {
      */
     async discoverDevices() {
         let currentUUIDs: string[] = [];
-        let uuids : [string[], string[], string[]] = await Promise.all([
+        let uuids: [string[], string[], string[]] = await Promise.all([
             this.addDevices(await this.client.getPucks()),
             this.addDevices(await this.client.getVents()),
             this.addDevices((await this.client.getRooms()).filter((value: Room) => {
@@ -122,6 +165,7 @@ export class FlairPlatform implements DynamicPlatformPlugin {
                 // the `context` property can be used to store any data about the accessory you may need
                 accessory.context.device = device;
 
+
                 // create the accessory handler
                 // this is imported from `puckPlatformAccessory.ts`
                 if (device instanceof Puck) {
@@ -132,7 +176,10 @@ export class FlairPlatform implements DynamicPlatformPlugin {
                     new FlairVentPlatformAccessory(this, accessory, this.client);
                 } else if (device instanceof Room) {
                     accessory.context.type = Room.type;
-                    new FlairRoomPlatformAccessory(this, accessory, this.client);
+                    let self = this;
+                    this.getStructure().then((structure: Structure) => {
+                        self.rooms.push(new FlairRoomPlatformAccessory(self, accessory, this.client, structure));
+                    })
                 } else {
                     continue;
                 }

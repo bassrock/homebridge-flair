@@ -8,8 +8,7 @@ import {
 
 import {FlairPlatform} from './platform';
 import Client from "flair-api-ts/lib/client";
-import {Room} from "flair-api-ts/lib/client/models/room";
-import {Vent} from "flair-api-ts/lib/client/models";
+import {FlairMode, Room, Structure, StructureHeatCoolMode} from "flair-api-ts/lib/client/models";
 import {getRandomIntInclusive} from "./utils";
 
 /**
@@ -23,15 +22,18 @@ export class FlairRoomPlatformAccessory {
 
     private client: Client;
     private room: Room;
+    private structure: Structure;
 
 
     constructor(
         private readonly platform: FlairPlatform,
         private readonly accessory: PlatformAccessory,
-        client: Client
+        client: Client,
+        structure: Structure
     ) {
         this.room = this.accessory.context.device;
         this.client = client;
+        this.structure = structure;
 
         // set accessory information
         this.accessoryInformationService = this.accessory.getService(this.platform.Service.AccessoryInformation)!
@@ -45,19 +47,49 @@ export class FlairRoomPlatformAccessory {
             .setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name)
             .setCharacteristic(this.platform.Characteristic.CurrentTemperature, this.room.currentTemperatureC!)
             .setCharacteristic(this.platform.Characteristic.TargetTemperature, this.room.setPointC!)
-            .setCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState, this.platform.Characteristic.TargetHeatingCoolingState.AUTO)
-            .setCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.platform.Characteristic.CurrentHeatingCoolingState.COOL)
+            .setCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState, this.getTargetHeatingCoolingStateFromStructure(this.structure)!)
+            .setCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.getCurrentHeatingCoolingStateFromStructure(this.structure)!)
             .setCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.room.currentHumidity!)
 
         this.thermostatService.getCharacteristic(this.platform.Characteristic.TargetTemperature)
             .on(CharacteristicEventTypes.SET, this.setTargetTemperature.bind(this))
             .on(CharacteristicEventTypes.GET, this.getTargetTemperature.bind(this))
 
+        this.thermostatService.getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
+             .on(CharacteristicEventTypes.SET, this.setTargetHeatingCoolingState.bind(this))
+            // .on(CharacteristicEventTypes.GET, this.getTargetTemperature.bind(this))
+
         setInterval(async () => {
             await this.getNewRoomReadings()
         }, (platform.config.pollInterval+ getRandomIntInclusive(1,20)) * 1000);
         this.getNewRoomReadings();
     }
+
+    setTargetHeatingCoolingState(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+        if (value == this.platform.Characteristic.TargetHeatingCoolingState.OFF) {
+            this.platform.setStructureMode(FlairMode.MANUAL, StructureHeatCoolMode.COOL).then((structure: Structure) => {
+                callback(null, value);
+                this.updateFromStructure(structure);
+            })
+        } else if(value == this.platform.Characteristic.TargetHeatingCoolingState.COOL) {
+            this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.COOL).then((structure: Structure) => {
+                callback(null, value);
+                this.updateFromStructure(structure);
+            })
+        } else if(value == this.platform.Characteristic.TargetHeatingCoolingState.HEAT) {
+            this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.HEAT).then((structure: Structure) => {
+                callback(null, value);
+                this.updateFromStructure(structure);
+            })
+        } else if(value == this.platform.Characteristic.TargetHeatingCoolingState.AUTO) {
+            this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.COOL).then((structure: Structure) => {
+                callback(null, this.platform.Characteristic.TargetHeatingCoolingState.AUTO);
+                this.updateFromStructure(structure);
+            })
+        }
+    }
+
+
 
     setTargetTemperature(value: CharacteristicValue, callback: CharacteristicSetCallback) {
         let self = this;
@@ -83,6 +115,17 @@ export class FlairRoomPlatformAccessory {
         return room;
     }
 
+    public updateFromStructure(structure: Structure) {
+        this.structure = structure;
+
+        // push the new value to HomeKit
+        this.thermostatService
+            .updateCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState, this.getTargetHeatingCoolingStateFromStructure(this.structure)!)
+            .updateCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.getCurrentHeatingCoolingStateFromStructure(this.structure)!)
+
+        this.platform.log.debug(`Pushed updated current structure state for ${this.room.name!} to HomeKit:`, this.structure.structureHeatCoolMode!);
+    }
+
     updateRoomReadingsFromRoom(room: Room) {
         this.accessory.context.device = room;
         this.room = room;
@@ -91,11 +134,46 @@ export class FlairRoomPlatformAccessory {
         this.thermostatService
             .updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.room.currentTemperatureC!)
             .updateCharacteristic(this.platform.Characteristic.TargetTemperature, this.room.setPointC!)
-            .updateCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState, this.platform.Characteristic.TargetHeatingCoolingState.AUTO)
-            .updateCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.platform.Characteristic.CurrentHeatingCoolingState.COOL)
             .updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.room.currentHumidity!)
-
         this.platform.log.debug(`Pushed updated current temperature state for ${this.room.name!} to HomeKit:`, this.room.currentTemperatureC!);
+    }
+
+    private getCurrentHeatingCoolingStateFromStructure(structure: Structure) {
+        if (structure.mode === FlairMode.MANUAL) {
+            return this.platform.Characteristic.CurrentHeatingCoolingState.OFF
+        }
+
+
+        if (structure.structureHeatCoolMode === StructureHeatCoolMode.COOL) {
+            return this.platform.Characteristic.CurrentHeatingCoolingState.COOL;
+        }
+
+        if (structure.structureHeatCoolMode === StructureHeatCoolMode.HEAT) {
+            return this.platform.Characteristic.CurrentHeatingCoolingState.HEAT;
+        }
+
+        if (structure.structureHeatCoolMode === StructureHeatCoolMode.AUTO) {
+            return this.platform.Characteristic.CurrentHeatingCoolingState.COOL;
+        }
+    }
+
+
+    private getTargetHeatingCoolingStateFromStructure(structure: Structure) {
+        if (structure.mode === FlairMode.MANUAL) {
+            return this.platform.Characteristic.TargetHeatingCoolingState.OFF
+        }
+
+        if (structure.structureHeatCoolMode === StructureHeatCoolMode.COOL) {
+            return this.platform.Characteristic.TargetHeatingCoolingState.COOL;
+        }
+
+        if (structure.structureHeatCoolMode === StructureHeatCoolMode.HEAT) {
+            return this.platform.Characteristic.TargetHeatingCoolingState.HEAT;
+        }
+
+        if (structure.structureHeatCoolMode === StructureHeatCoolMode.AUTO) {
+            return this.platform.Characteristic.TargetHeatingCoolingState.AUTO;
+        }
     }
 
 }
