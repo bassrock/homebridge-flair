@@ -1,15 +1,15 @@
 import type {PlatformAccessory, Service} from 'homebridge';
 import {
-    CharacteristicEventTypes,
-    CharacteristicGetCallback,
-    CharacteristicSetCallback,
-    CharacteristicValue
+  CharacteristicEventTypes,
+  CharacteristicGetCallback,
+  CharacteristicSetCallback,
+  CharacteristicValue,
 } from 'homebridge';
 
 import {FlairPlatform} from './platform';
-import Client from "flair-api-ts/lib/client";
-import {FlairMode, Room, Structure, StructureHeatCoolMode} from "flair-api-ts/lib/client/models";
-import {getRandomIntInclusive} from "./utils";
+import Client from 'flair-api-ts/lib/client';
+import {FlairMode, Room, Structure, StructureHeatCoolMode} from 'flair-api-ts/lib/client/models';
+import {getRandomIntInclusive} from './utils';
 
 /**
  * Platform Accessory
@@ -29,157 +29,175 @@ export class FlairRoomPlatformAccessory {
         private readonly platform: FlairPlatform,
         private readonly accessory: PlatformAccessory,
         client: Client,
-        structure: Structure
+        structure: Structure,
     ) {
-        this.room = this.accessory.context.device;
-        this.client = client;
-        this.structure = structure;
+      this.room = this.accessory.context.device;
+      this.client = client;
+      this.structure = structure;
 
-        // set accessory information
-        this.accessoryInformationService = this.accessory.getService(this.platform.Service.AccessoryInformation)!
-            .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Flair')
-            .setCharacteristic(this.platform.Characteristic.Model, 'Room')
-            .setCharacteristic(this.platform.Characteristic.SerialNumber, this.room.id!);
+      // set accessory information
+      this.accessoryInformationService = this.accessory.getService(this.platform.Service.AccessoryInformation)!
+        .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Flair')
+        .setCharacteristic(this.platform.Characteristic.Model, 'Room')
+        .setCharacteristic(this.platform.Characteristic.SerialNumber, this.room.id!);
 
-        this.thermostatService = this.accessory.getService(this.platform.Service.Thermostat) ?? this.accessory.addService(this.platform.Service.Thermostat);
-        this.thermostatService.setPrimaryService(true);
-        this.thermostatService
-            .setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name)
-            .setCharacteristic(this.platform.Characteristic.CurrentTemperature, this.room.currentTemperatureC!)
-            .setCharacteristic(this.platform.Characteristic.TargetTemperature, this.room.setPointC!)
-            .setCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState, this.getTargetHeatingCoolingStateFromStructure(this.structure)!)
-            .setCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.getCurrentHeatingCoolingStateFromStructure(this.structure)!)
-            .setCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.room.currentHumidity!)
+      this.thermostatService = this.accessory.getService(this.platform.Service.Thermostat)
+          ?? this.accessory.addService(this.platform.Service.Thermostat);
+      this.thermostatService.setPrimaryService(true);
+      this.thermostatService
+        .setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name)
+        .setCharacteristic(this.platform.Characteristic.CurrentTemperature, this.room.currentTemperatureC!)
+        .setCharacteristic(this.platform.Characteristic.TargetTemperature, this.room.setPointC!)
+        .setCharacteristic(
+          this.platform.Characteristic.TargetHeatingCoolingState,
+          this.getTargetHeatingCoolingStateFromStructure(this.structure)!,
+        )
+        .setCharacteristic(
+          this.platform.Characteristic.CurrentHeatingCoolingState,
+          this.getCurrentHeatingCoolingStateFromStructure(this.structure)!,
+        )
+        .setCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.room.currentHumidity!);
 
-        this.thermostatService.getCharacteristic(this.platform.Characteristic.TargetTemperature)
-            .on(CharacteristicEventTypes.SET, this.setTargetTemperature.bind(this))
-            .on(CharacteristicEventTypes.GET, this.getTargetTemperature.bind(this))
+      this.thermostatService.getCharacteristic(this.platform.Characteristic.TargetTemperature)
+        .on(CharacteristicEventTypes.SET, this.setTargetTemperature.bind(this))
+        .on(CharacteristicEventTypes.GET, this.getTargetTemperature.bind(this));
 
-        this.thermostatService.getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
-             .on(CharacteristicEventTypes.SET, this.setTargetHeatingCoolingState.bind(this))
-            // .on(CharacteristicEventTypes.GET, this.getTargetTemperature.bind(this))
+      this.thermostatService.getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
+        .on(CharacteristicEventTypes.SET, this.setTargetHeatingCoolingState.bind(this));
+      // .on(CharacteristicEventTypes.GET, this.getTargetTemperature.bind(this))
 
-        setInterval(async () => {
-            await this.getNewRoomReadings()
-        }, (platform.config.pollInterval+ getRandomIntInclusive(1,20)) * 1000);
-        this.getNewRoomReadings();
+      setInterval(async () => {
+        await this.getNewRoomReadings();
+      }, (platform.config.pollInterval+ getRandomIntInclusive(1,20)) * 1000);
+      this.getNewRoomReadings();
     }
 
     setTargetHeatingCoolingState(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-        if (value == this.platform.Characteristic.TargetHeatingCoolingState.OFF) {
-            this.platform.setStructureMode(FlairMode.MANUAL, StructureHeatCoolMode.COOL).then((structure: Structure) => {
-                callback(null, value);
-                this.updateFromStructure(structure);
-            })
-        } else if(value == this.platform.Characteristic.TargetHeatingCoolingState.COOL) {
-            this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.COOL).then((structure: Structure) => {
-                callback(null, value);
-                this.updateFromStructure(structure);
-            })
-        } else if(value == this.platform.Characteristic.TargetHeatingCoolingState.HEAT) {
-            this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.HEAT).then((structure: Structure) => {
-                callback(null, value);
-                this.updateFromStructure(structure);
-            })
-        } else if(value == this.platform.Characteristic.TargetHeatingCoolingState.AUTO) {
-            this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.COOL).then((structure: Structure) => {
-                callback(null, this.platform.Characteristic.TargetHeatingCoolingState.AUTO);
-                this.updateFromStructure(structure);
-            })
-        }
+      if (value === this.platform.Characteristic.TargetHeatingCoolingState.OFF) {
+        this.platform.setStructureMode(FlairMode.MANUAL, StructureHeatCoolMode.COOL).then((structure: Structure) => {
+          callback(null, value);
+          this.updateFromStructure(structure);
+        });
+      } else if(value === this.platform.Characteristic.TargetHeatingCoolingState.COOL) {
+        this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.COOL).then((structure: Structure) => {
+          callback(null, value);
+          this.updateFromStructure(structure);
+        });
+      } else if(value === this.platform.Characteristic.TargetHeatingCoolingState.HEAT) {
+        this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.HEAT).then((structure: Structure) => {
+          callback(null, value);
+          this.updateFromStructure(structure);
+        });
+      } else if(value === this.platform.Characteristic.TargetHeatingCoolingState.AUTO) {
+        this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.COOL).then((structure: Structure) => {
+          callback(null, this.platform.Characteristic.TargetHeatingCoolingState.AUTO);
+          this.updateFromStructure(structure);
+        });
+      }
     }
 
 
 
     setTargetTemperature(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-        let self = this;
-        this.client.setRoomSetPoint(this.room, value as number).then(function (room: Room) {
-            self.updateRoomReadingsFromRoom(room)
-            self.platform.log.debug('Set Characteristic Temperature -> ', value);
-            // you must call the callback function
-            callback(null, room.setPointC);
-        })
+      this.client.setRoomSetPoint(this.room, value as number).then((room: Room) => {
+        this.updateRoomReadingsFromRoom(room);
+        this.platform.log.debug('Set Characteristic Temperature -> ', value);
+        // you must call the callback function
+        callback(null, room.setPointC);
+      });
 
     }
 
     getTargetTemperature(callback: CharacteristicGetCallback) {
-        this.getNewRoomReadings().then(function (room: Room) {
-            callback(null, room.setPointC)
-        })
+      this.getNewRoomReadings().then((room: Room) => {
+        callback(null, room.setPointC);
+      });
     }
 
 
     async getNewRoomReadings(): Promise<Room> {
-        try {
-            let room = await this.client.getRoom(this.room)
-            this.updateRoomReadingsFromRoom(room)
-            return room;
-        } catch (e) {
-            this.platform.log.error(e);
-        }
+      try {
+        const room = await this.client.getRoom(this.room);
+        this.updateRoomReadingsFromRoom(room);
+        return room;
+      } catch (e) {
+        this.platform.log.error(e);
+      }
 
-        return this.room
+      return this.room;
     }
 
     public updateFromStructure(structure: Structure) {
-        this.structure = structure;
+      this.structure = structure;
 
-        // push the new value to HomeKit
-        this.thermostatService
-            .updateCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState, this.getTargetHeatingCoolingStateFromStructure(this.structure)!)
-            .updateCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.getCurrentHeatingCoolingStateFromStructure(this.structure)!)
+      // push the new value to HomeKit
+      this.thermostatService
+        .updateCharacteristic(
+          this.platform.Characteristic.TargetHeatingCoolingState,
+          this.getTargetHeatingCoolingStateFromStructure(this.structure)!,
+        )
+        .updateCharacteristic(
+          this.platform.Characteristic.CurrentHeatingCoolingState,
+          this.getCurrentHeatingCoolingStateFromStructure(this.structure)!,
+        );
 
-        this.platform.log.debug(`Pushed updated current structure state for ${this.room.name!} to HomeKit:`, this.structure.structureHeatCoolMode!);
+      this.platform.log.debug(
+        `Pushed updated current structure state for ${this.room.name!} to HomeKit:`,
+        this.structure.structureHeatCoolMode!,
+      );
     }
 
     updateRoomReadingsFromRoom(room: Room) {
-        this.accessory.context.device = room;
-        this.room = room;
+      this.accessory.context.device = room;
+      this.room = room;
 
-        // push the new value to HomeKit
-        this.thermostatService
-            .updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.room.currentTemperatureC!)
-            .updateCharacteristic(this.platform.Characteristic.TargetTemperature, this.room.setPointC!)
-            .updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.room.currentHumidity!)
-        this.platform.log.debug(`Pushed updated current temperature state for ${this.room.name!} to HomeKit:`, this.room.currentTemperatureC!);
+      // push the new value to HomeKit
+      this.thermostatService
+        .updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.room.currentTemperatureC!)
+        .updateCharacteristic(this.platform.Characteristic.TargetTemperature, this.room.setPointC!)
+        .updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.room.currentHumidity!);
+      this.platform.log.debug(
+        `Pushed updated current temperature state for ${this.room.name!} to HomeKit:`,
+        this.room.currentTemperatureC!,
+      );
     }
 
     private getCurrentHeatingCoolingStateFromStructure(structure: Structure) {
-        if (structure.mode === FlairMode.MANUAL) {
-            return this.platform.Characteristic.CurrentHeatingCoolingState.OFF
-        }
+      if (structure.mode === FlairMode.MANUAL) {
+        return this.platform.Characteristic.CurrentHeatingCoolingState.OFF;
+      }
 
 
-        if (structure.structureHeatCoolMode === StructureHeatCoolMode.COOL) {
-            return this.platform.Characteristic.CurrentHeatingCoolingState.COOL;
-        }
+      if (structure.structureHeatCoolMode === StructureHeatCoolMode.COOL) {
+        return this.platform.Characteristic.CurrentHeatingCoolingState.COOL;
+      }
 
-        if (structure.structureHeatCoolMode === StructureHeatCoolMode.HEAT) {
-            return this.platform.Characteristic.CurrentHeatingCoolingState.HEAT;
-        }
+      if (structure.structureHeatCoolMode === StructureHeatCoolMode.HEAT) {
+        return this.platform.Characteristic.CurrentHeatingCoolingState.HEAT;
+      }
 
-        if (structure.structureHeatCoolMode === StructureHeatCoolMode.AUTO) {
-            return this.platform.Characteristic.CurrentHeatingCoolingState.COOL;
-        }
+      if (structure.structureHeatCoolMode === StructureHeatCoolMode.AUTO) {
+        return this.platform.Characteristic.CurrentHeatingCoolingState.COOL;
+      }
     }
 
 
     private getTargetHeatingCoolingStateFromStructure(structure: Structure) {
-        if (structure.mode === FlairMode.MANUAL) {
-            return this.platform.Characteristic.TargetHeatingCoolingState.OFF
-        }
+      if (structure.mode === FlairMode.MANUAL) {
+        return this.platform.Characteristic.TargetHeatingCoolingState.OFF;
+      }
 
-        if (structure.structureHeatCoolMode === StructureHeatCoolMode.COOL) {
-            return this.platform.Characteristic.TargetHeatingCoolingState.COOL;
-        }
+      if (structure.structureHeatCoolMode === StructureHeatCoolMode.COOL) {
+        return this.platform.Characteristic.TargetHeatingCoolingState.COOL;
+      }
 
-        if (structure.structureHeatCoolMode === StructureHeatCoolMode.HEAT) {
-            return this.platform.Characteristic.TargetHeatingCoolingState.HEAT;
-        }
+      if (structure.structureHeatCoolMode === StructureHeatCoolMode.HEAT) {
+        return this.platform.Characteristic.TargetHeatingCoolingState.HEAT;
+      }
 
-        if (structure.structureHeatCoolMode === StructureHeatCoolMode.AUTO) {
-            return this.platform.Characteristic.TargetHeatingCoolingState.AUTO;
-        }
+      if (structure.structureHeatCoolMode === StructureHeatCoolMode.AUTO) {
+        return this.platform.Characteristic.TargetHeatingCoolingState.AUTO;
+      }
     }
 
 }
