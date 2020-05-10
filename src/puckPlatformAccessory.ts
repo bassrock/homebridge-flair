@@ -1,7 +1,13 @@
-import { CharacteristicEventTypes } from 'homebridge';
-import type { Service, PlatformAccessory, CharacteristicValue, CharacteristicSetCallback, CharacteristicGetCallback} from 'homebridge';
+import {CharacteristicEventTypes} from 'homebridge';
+import type {
+    Service,
+    PlatformAccessory,
+    CharacteristicValue,
+    CharacteristicSetCallback,
+    CharacteristicGetCallback
+} from 'homebridge';
 
-import { FlairPlatform } from './platform';
+import {FlairPlatform} from './platform';
 import {Puck, Vent} from "flair-api-ts/lib/client/models";
 import Client from "flair-api-ts/lib/client";
 import {Pressure, PressureSensor} from "./Pressure";
@@ -55,15 +61,21 @@ export class FlairPuckPlatformAccessory {
 
         setInterval(async () => {
             await this.getNewPuckReadings()
-        }, (platform.config.pollInterval+ getRandomIntInclusive(1,20)) * 1000);
+        }, (platform.config.pollInterval + getRandomIntInclusive(1, 20)) * 1000);
         this.getNewPuckReadings();
     }
 
 
     async getNewPuckReadings(): Promise<Puck> {
-        let puck = await this.client.getPuckReading(this.puck)
-        this.updatePuckReadingsFromPuck(puck)
-        return puck;
+        try {
+            let puck = await this.client.getPuckReading(this.puck)
+            this.updatePuckReadingsFromPuck(puck)
+            return puck;
+        } catch (e) {
+            this.platform.log.error(e);
+        }
+
+        return this.puck
     }
 
     updatePuckReadingsFromPuck(puck: Puck) {

@@ -56,8 +56,12 @@ export class FlairPlatform implements DynamicPlatformPlugin {
 
 
     private async getNewStructureReadings() {
-        let structure = await this.client.getStructure(await this.getStructure());
-        this.updateStructureFromStructureReading(structure);
+        try {
+            let structure = await this.client.getStructure(await this.getStructure());
+            this.updateStructureFromStructureReading(structure);
+        } catch (e) {
+            this.log.error(e);
+        }
     }
 
     private updateStructureFromStructureReading(structure: Structure) {

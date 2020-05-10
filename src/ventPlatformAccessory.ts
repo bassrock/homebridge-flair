@@ -94,9 +94,15 @@ export class FlairVentPlatformAccessory {
     }
 
     async getNewVentReadings(): Promise<Vent> {
-        let vent = await this.client.getVentReading(this.vent)
-        this.updateVentReadingsFromVent(vent)
-        return vent;
+        try {
+            let vent = await this.client.getVentReading(this.vent)
+            this.updateVentReadingsFromVent(vent)
+            return vent;
+        } catch (e) {
+            this.platform.log.error(e);
+        }
+
+        return this.vent
     }
 
     updateVentReadingsFromVent(vent: Vent) {

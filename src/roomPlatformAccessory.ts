@@ -110,9 +110,15 @@ export class FlairRoomPlatformAccessory {
 
 
     async getNewRoomReadings(): Promise<Room> {
-        let room = await this.client.getRoom(this.room)
-        this.updateRoomReadingsFromRoom(room)
-        return room;
+        try {
+            let room = await this.client.getRoom(this.room)
+            this.updateRoomReadingsFromRoom(room)
+            return room;
+        } catch (e) {
+            this.platform.log.error(e);
+        }
+
+        return this.room
     }
 
     public updateFromStructure(structure: Structure) {
