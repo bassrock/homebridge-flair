@@ -151,16 +151,19 @@ export class FlairPlatform implements DynamicPlatformPlugin {
      */
     async discoverDevices() {
       let currentUUIDs: string[] = [];
-      const uuids: [string[], string[], string[]] = await Promise.all([
-        this.addDevices(await this.client.getPucks()),
+
+      const promisesToResolve = [
         this.addDevices(await this.client.getVents()),
         this.addDevices((await this.client.getRooms()).filter((value: Room) => {
           return value.pucksInactive === 'Active';
         }) as [Room]),
-      ]);
+      ];
 
-      currentUUIDs = currentUUIDs.concat(uuids[0], uuids[1], uuids[2]);
+      if (!this.config.hidePuckSensors) {
+        promisesToResolve.push(this.addDevices(await this.client.getPucks()));
+      }
 
+      currentUUIDs = currentUUIDs.concat(...await Promise.all(promisesToResolve));
 
       //Loop over the current uuid's and if they don't exist then remove them.
       for (const accessory of this.accessories) {

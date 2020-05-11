@@ -18,7 +18,7 @@
         "default": ""
       },
       "username": {
-        "title": "useranme",
+        "title": "username",
         "type": "string",
         "required": true,
         "default": ""
@@ -34,6 +34,12 @@
         "type": "number",
         "required": true,
         "default": 60
+      },
+      "hidePuckSensors": {
+        "title": "Hide the puck sensors and rely on room thermostats only",
+        "type": "boolean",
+        "required": true,
+        "default": false
       }
     }
   }
