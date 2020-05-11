@@ -30,7 +30,7 @@
   "dependencies": {
     "@types/node": "^13.13.2",
     "class-transformer": "^0.2.3",
-    "flair-api-ts": "0.0.15",
+    "flair-api-ts": "0.0.16",
     "homebridge": "^1.0.4",
     "reflect-metadata": "^0.1.13"
   },

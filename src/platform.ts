@@ -113,7 +113,16 @@ export class FlairPlatform implements DynamicPlatformPlugin {
       if (this.structure) {
         return this.structure!;
       }
-      this.structure = await this.client.getPrimaryStructure();
+      try {
+        this.structure = await this.client.getPrimaryStructure();
+      } catch (e) {
+        throw('There was an error getting your primary flair home from the api: ' + e.message);
+      }
+
+      if (!this.structure) {
+        throw('The structure is not available, this should not happen.')
+      }
+
       return this.structure!;
     }
 
