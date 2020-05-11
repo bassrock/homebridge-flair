@@ -45,6 +45,12 @@ export class FlairVentPlatformAccessory {
           ?? this.accessory.addService(this.platform.Service.WindowCovering);
       this.windowService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
       this.windowService.setPrimaryService(true);
+      this.windowService.getCharacteristic(this.platform.Characteristic.TargetPosition).setProps({
+        minStep: 50,
+      });
+      this.windowService.getCharacteristic(this.platform.Characteristic.CurrentPosition).setProps({
+        minStep: 50,
+      });
 
       //Add our temperature sensor
       this.temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor)
