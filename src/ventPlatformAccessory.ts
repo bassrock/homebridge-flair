@@ -9,7 +9,6 @@ import {CharacteristicEventTypes} from 'homebridge';
 import {FlairPlatform} from './platform';
 import Client from 'flair-api-ts/lib/client';
 import {Vent} from 'flair-api-ts/lib/client/models';
-import {Pressure, PressureSensor} from './Pressure';
 import {getRandomIntInclusive} from './utils';
 
 enum AccessoryType {
@@ -30,7 +29,6 @@ export class FlairVentPlatformAccessory {
     private mainService: Service;
 
     private temperatureService: Service;
-    private pressureService: Service;
     private accessoryInformationService: Service;
 
     private vent: Vent;
@@ -147,12 +145,6 @@ export class FlairVentPlatformAccessory {
       );
       this.mainService.addLinkedService(this.temperatureService);
 
-      //Add our custom pressure sensor
-      this.pressureService = this.accessory.getService(PressureSensor) ?? this.accessory.addService(PressureSensor);
-      this.pressureService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
-      this.pressureService.setCharacteristic(Pressure, this.vent.ductPressure);
-      this.mainService.addLinkedService(this.pressureService);
-
       setInterval(async () => {
         await this.getNewVentReadings();
       }, (platform.config.pollInterval + getRandomIntInclusive(1, 20)) * 1000);
@@ -199,9 +191,7 @@ export class FlairVentPlatformAccessory {
         this.platform.Characteristic.CurrentTemperature,
         this.vent.ductTemperatureC,
       );
-
-      this.pressureService.updateCharacteristic(Pressure, this.vent.ductPressure);
-
+      
       // We fake a vent as a window covering.
       switch (this.accessoryType) {
         case AccessoryType.WindowCovering:
