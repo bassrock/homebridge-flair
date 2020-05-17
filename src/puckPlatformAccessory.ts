@@ -6,7 +6,6 @@ import type {
 import {FlairPlatform} from './platform';
 import {Puck} from 'flair-api-ts/lib/client/models';
 import Client from 'flair-api-ts/lib/client';
-import {Pressure, PressureSensor} from './Pressure';
 import {getRandomIntInclusive} from './utils';
 
 /**
@@ -18,7 +17,6 @@ export class FlairPuckPlatformAccessory {
     private temperatureService: Service;
     private humidityService: Service;
     private accessoryInformationService: Service;
-    private pressureService: Service;
 
     private client: Client;
     private puck: Puck;
@@ -54,13 +52,6 @@ export class FlairPuckPlatformAccessory {
       this.humidityService.setCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.puck.currentHumidity);
       this.temperatureService.addLinkedService(this.humidityService);
 
-      //Add our custom pressure sensor
-      this.pressureService = this.accessory.getService(PressureSensor)
-          ?? this.accessory.addService(PressureSensor);
-      this.pressureService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
-      this.pressureService.setCharacteristic(Pressure, this.puck.currentRoomPressure);
-      this.temperatureService.addLinkedService(this.pressureService);
-
       setInterval(async () => {
         await this.getNewPuckReadings();
       }, (platform.config.pollInterval + getRandomIntInclusive(1, 20)) * 1000);
@@ -87,7 +78,6 @@ export class FlairPuckPlatformAccessory {
       // push the new value to HomeKit
       this.temperatureService.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.puck.currentTemperatureC);
       this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.puck.currentHumidity);
-      this.pressureService.updateCharacteristic(Pressure, this.puck.currentRoomPressure);
 
       this.accessory.getService(this.platform.Service.AccessoryInformation)!
         .updateCharacteristic(this.platform.Characteristic.FirmwareRevision, this.puck.firmwareVersionS);

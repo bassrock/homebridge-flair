@@ -191,7 +191,7 @@ export class FlairVentPlatformAccessory {
         this.platform.Characteristic.CurrentTemperature,
         this.vent.ductTemperatureC,
       );
-      
+
       // We fake a vent as a window covering.
       switch (this.accessoryType) {
         case AccessoryType.WindowCovering:
