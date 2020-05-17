@@ -120,7 +120,7 @@ export class FlairPlatform implements DynamicPlatformPlugin {
       }
 
       if (!this.structure) {
-        throw('The structure is not available, this should not happen.')
+        throw('The structure is not available, this should not happen.');
       }
 
       return this.structure!;
@@ -183,7 +183,6 @@ export class FlairPlatform implements DynamicPlatformPlugin {
         }
       }
     }
-
 
     async addDevices(devices: [Model]): Promise<string[]> {
       const currentUUIDs: string[] = [];
