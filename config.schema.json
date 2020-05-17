@@ -40,6 +40,32 @@
         "type": "boolean",
         "required": true,
         "default": false
+      },
+      "ventAccessoryType": {
+        "title": "Vent Accessory Type",
+        "type": "string",
+        "required": true,
+        "default": "windowCovering",
+        "oneOf": [
+          {
+            "title": "Window Covering",
+            "enum": [
+              "windowCovering"
+            ]
+          },
+          {
+            "title": "Fan",
+            "enum": [
+              "fan"
+            ]
+          },
+          {
+            "title": "Air Purifier",
+            "enum": [
+              "airPurifier"
+            ]
+          }
+        ]
       }
     }
   }
