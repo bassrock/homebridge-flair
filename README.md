@@ -23,7 +23,8 @@ Configuration sample (edit `~/.homebridge/config.json`):
             "username": "user",
             "password": "pass",
             "pollInterval": 60,
-            "platform": "Flair"
+            "platform": "Flair",
+            "ventAccessoryType": "windowCovering"
         }
     ]
 }
@@ -44,3 +45,11 @@ You will use the client id and secret they send you in the config block above.
 # Auto Vs Manual Mode
 
 When you use Pucks with your setup the pucks will appear in the app as a Thermostat. If you turn those thermostats off it will put the Flair system into Manual mode. If you turn the thermostat to any other setting it will set your system to Flair's Auto mode.
+
+# Vent Accessory Type
+
+You can specify how vent accessories are shown in HomeKit with the `ventAccessoryType` property.
+
+`windowCovering` - Window Covering
+`fan` - Fan
+`airPurifier` - Air Purifier

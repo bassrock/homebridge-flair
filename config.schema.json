@@ -8,41 +8,48 @@
       "clientId": {
         "title": "Client ID",
         "type": "string",
+        "description": "Client ID obtained from Flair Support",
         "required": true,
         "default": ""
       },
       "clientSecret": {
         "title": "Client Secret",
         "type": "string",
+        "description": "Client Secret obtained from Flair Support",
         "required": true,
         "default": ""
       },
       "username": {
         "title": "username",
         "type": "string",
+        "description": "Username used to access Flair",
         "required": true,
         "default": ""
       },
       "password": {
         "title": "password",
         "type": "string",
+        "description": "Password used to access Flair",
         "required": true,
         "default": ""
       },
       "pollInterval": {
         "title": "Poll Interval",
         "type": "number",
+        "description": "How often the plugin should poll the Flair API for updates.",
         "required": true,
         "default": 60
       },
       "hidePuckSensors": {
-        "title": "Hide the puck sensors and rely on room thermostats only",
+        "title": "Hide the puck sensors",
+        "description": "Hides the Puck Sensors and only relies on the Puck Thermostats (Rooms)",
         "type": "boolean",
         "required": true,
         "default": false
       },
       "ventAccessoryType": {
         "title": "Vent Accessory Type",
+        "description": "Controls how the vents should show up in HomeKit",
         "type": "string",
         "required": true,
         "default": "windowCovering",
