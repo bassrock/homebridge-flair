@@ -121,7 +121,7 @@ export class FlairRoomPlatformAccessory {
         this.updateRoomReadingsFromRoom(room);
         return room;
       } catch (e) {
-        this.platform.log.error(e);
+        this.platform.log.debug(e);
       }
 
       return this.room;
