@@ -88,7 +88,7 @@ export class FlairPlatform implements DynamicPlatformPlugin {
         const structure = await this.client.getStructure(await this.getStructure());
         this.updateStructureFromStructureReading(structure);
       } catch (e) {
-        this.log.error(e);
+        this.log.debug(e);
       }
     }
 
