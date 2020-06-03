@@ -177,7 +177,7 @@ export class FlairVentPlatformAccessory {
         this.updateVentReadingsFromVent(vent);
         return vent;
       } catch (e) {
-        this.platform.log.error(e);
+        this.platform.log.debug(e);
       }
 
       return this.vent;
