@@ -89,7 +89,7 @@ export class FlairRoomPlatformAccessory {
           this.updateFromStructure(structure);
         });
       } else if(value === this.platform.Characteristic.TargetHeatingCoolingState.AUTO) {
-        this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.COOL).then((structure: Structure) => {
+        this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.AUTO).then((structure: Structure) => {
           callback(null, this.platform.Characteristic.TargetHeatingCoolingState.AUTO);
           this.updateFromStructure(structure);
         });
