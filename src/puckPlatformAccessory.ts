@@ -65,7 +65,7 @@ export class FlairPuckPlatformAccessory {
         this.updatePuckReadingsFromPuck(puck);
         return puck;
       } catch (e) {
-        this.platform.log.error(e);
+        this.platform.log.debug(e);
       }
 
       return this.puck;
