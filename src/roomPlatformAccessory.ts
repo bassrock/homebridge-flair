@@ -72,7 +72,7 @@ export class FlairRoomPlatformAccessory {
       this.getNewRoomReadings();
     }
 
-    setTargetHeatingCoolingState(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    setTargetHeatingCoolingState(value: CharacteristicValue, callback: CharacteristicSetCallback):void {
       if (value === this.platform.Characteristic.TargetHeatingCoolingState.OFF) {
         this.platform.setStructureMode(FlairMode.MANUAL, StructureHeatCoolMode.COOL).then((structure: Structure) => {
           callback(null, value);
@@ -98,7 +98,7 @@ export class FlairRoomPlatformAccessory {
 
 
 
-    setTargetTemperature(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    setTargetTemperature(value: CharacteristicValue, callback: CharacteristicSetCallback):void {
       this.client.setRoomSetPoint(this.room, value as number).then((room: Room) => {
         this.updateRoomReadingsFromRoom(room);
         this.platform.log.debug('Set Characteristic Temperature -> ', value);
@@ -108,7 +108,7 @@ export class FlairRoomPlatformAccessory {
 
     }
 
-    getTargetTemperature(callback: CharacteristicGetCallback) {
+    getTargetTemperature(callback: CharacteristicGetCallback):void {
       this.getNewRoomReadings().then((room: Room) => {
         callback(null, room.setPointC);
       });
@@ -127,7 +127,7 @@ export class FlairRoomPlatformAccessory {
       return this.room;
     }
 
-    public updateFromStructure(structure: Structure) {
+    public updateFromStructure(structure: Structure):void {
       this.structure = structure;
 
       // push the new value to HomeKit
@@ -147,7 +147,7 @@ export class FlairRoomPlatformAccessory {
       );
     }
 
-    updateRoomReadingsFromRoom(room: Room) {
+    updateRoomReadingsFromRoom(room: Room):void {
       this.accessory.context.device = room;
       this.room = room;
 

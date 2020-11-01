@@ -130,7 +130,7 @@ export class FlairPlatform implements DynamicPlatformPlugin {
      * This function is invoked when homebridge restores cached accessories from disk at startup.
      * It should be used to setup event handlers for characteristics and update respective values.
      */
-    configureAccessory(accessory: PlatformAccessory) {
+    configureAccessory(accessory: PlatformAccessory):void {
       this.log.info('Restoring accessory from cache:', accessory.displayName);
 
       if (accessory.context.type === Puck.type) {
@@ -158,7 +158,7 @@ export class FlairPlatform implements DynamicPlatformPlugin {
      * Accessories must only be registered once, previously created accessories
      * must not be registered again to prevent "duplicate UUID" errors.
      */
-    async discoverDevices() {
+    async discoverDevices(): Promise<void> {
       let currentUUIDs: string[] = [];
 
       const promisesToResolve = [

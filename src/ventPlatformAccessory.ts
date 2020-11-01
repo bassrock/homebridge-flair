@@ -28,7 +28,7 @@ export class FlairVentPlatformAccessory {
     private airPurifierService?: Service;
     private mainService: Service;
 
-    private temperatureService: Service;
+    private temperatureService: Service | undefined;
     private accessoryInformationService: Service;
 
     private vent: Vent;
@@ -136,14 +136,22 @@ export class FlairVentPlatformAccessory {
       this.mainService.setPrimaryService(true);
 
       //Add our temperature sensor
-      this.temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor)
+      if (platform.config.hideVentTemperatureSensors) {
+        const temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor);
+        if (temperatureService) {
+          this.mainService.removeLinkedService(temperatureService);
+          this.accessory.removeService(temperatureService);
+        }
+      } else {
+        this.temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor)
             ?? this.accessory.addService(this.platform.Service.TemperatureSensor);
-      this.temperatureService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
-      this.temperatureService.setCharacteristic(
-        this.platform.Characteristic.CurrentTemperature,
-        this.vent.ductTemperatureC,
-      );
-      this.mainService.addLinkedService(this.temperatureService);
+        this.temperatureService.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
+        this.temperatureService.setCharacteristic(
+          this.platform.Characteristic.CurrentTemperature,
+          this.vent.ductTemperatureC,
+        );
+        this.mainService.addLinkedService(this.temperatureService);
+      }
 
       setInterval(async () => {
         await this.getNewVentReadings();
@@ -155,7 +163,7 @@ export class FlairVentPlatformAccessory {
      //  * Handle "SET" requests from HomeKit
      //  * These are sent when the user changes the state of an accessory, for example, changing the Brightness
      //  */
-    setTargetPosition(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    setTargetPosition(value: CharacteristicValue, callback: CharacteristicSetCallback):void {
       this.client.setVentPercentOpen(this.vent, value as number).then((vent: Vent) => {
         this.updateVentReadingsFromVent(vent);
         this.platform.log.debug('Set Characteristic Percent Open -> ', value);
@@ -165,7 +173,7 @@ export class FlairVentPlatformAccessory {
 
     }
 
-    getTargetPosition(callback: CharacteristicGetCallback) {
+    getTargetPosition(callback: CharacteristicGetCallback):void {
       this.getNewVentReadings().then((vent: Vent) => {
         callback(null, vent.percentOpen);
       });
@@ -183,14 +191,17 @@ export class FlairVentPlatformAccessory {
       return this.vent;
     }
 
-    updateVentReadingsFromVent(vent: Vent) {
+    updateVentReadingsFromVent(vent: Vent): void {
       this.accessory.context.device = vent;
       this.vent = vent;
 
-      this.temperatureService.updateCharacteristic(
-        this.platform.Characteristic.CurrentTemperature,
-        this.vent.ductTemperatureC,
-      );
+      if (this.temperatureService) {
+        this.temperatureService.updateCharacteristic(
+          this.platform.Characteristic.CurrentTemperature,
+          this.vent.ductTemperatureC,
+        );
+      }
+
 
       // We fake a vent as a window covering.
       switch (this.accessoryType) {
