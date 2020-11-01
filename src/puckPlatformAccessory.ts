@@ -71,7 +71,7 @@ export class FlairPuckPlatformAccessory {
       return this.puck;
     }
 
-    updatePuckReadingsFromPuck(puck: Puck) {
+    updatePuckReadingsFromPuck(puck: Puck):void {
       this.accessory.context.device = puck;
       this.puck = puck;
 
