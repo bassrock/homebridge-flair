@@ -2,6 +2,9 @@
   "displayName": "Homebridge Flair",
   "name": "homebridge-flair",
   "version": "0.0.0-development",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
   "description": "Brings the flair smart vents into homekit",
   "license": "ISC",
   "repository": {
@@ -29,7 +32,8 @@
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
-      "@semantic-release/npm"
+      "@semantic-release/npm",
+      "@semantic-release/github"
     ]
   },
   "keywords": [
