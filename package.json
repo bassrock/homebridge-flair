@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Flair",
   "name": "homebridge-flair",
-  "version": "1.0.7",
+  "version": "0.0.0-development",
   "description": "Brings the flair smart vents into homekit",
   "license": "ISC",
   "repository": {
@@ -21,7 +21,17 @@
     "lint:fix": "eslint --fix src/**",
     "watch": "npm run build && npm link && nodemon",
     "build": "rimraf ./dist && tsc",
-    "prepublishOnly": "npm run lint && npm run build"
+    "semantic-release": "semantic-release"
+  },
+  "release": {
+    "branches": [
+      "main"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/npm"
+    ]
   },
   "keywords": [
     "homebridge-plugin",
