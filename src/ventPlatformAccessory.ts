@@ -7,8 +7,7 @@ import type {
 } from 'homebridge';
 import {CharacteristicEventTypes} from 'homebridge';
 import {FlairPlatform} from './platform';
-import Client from 'flair-api-ts/lib/client';
-import {Vent} from 'flair-api-ts/lib/client/models';
+import {Vent, Client} from 'flair-api-ts';
 import {getRandomIntInclusive} from './utils';
 
 enum AccessoryType {
