@@ -5,9 +5,7 @@ import {PLATFORM_NAME, PLUGIN_NAME} from './settings';
 import {FlairPuckPlatformAccessory} from './puckPlatformAccessory';
 import {FlairVentPlatformAccessory} from './ventPlatformAccessory';
 import {FlairRoomPlatformAccessory} from './roomPlatformAccessory';
-import Client from 'flair-api-ts/lib/client';
-import {Puck, Vent, Room, Structure, FlairMode, StructureHeatCoolMode} from 'flair-api-ts/lib/client/models';
-import {Model} from 'flair-api-ts/lib/client/models/model';
+import {Puck, Vent, Room, Structure, FlairMode, StructureHeatCoolMode, Client, Model} from 'flair-api-ts';
 import {plainToClass} from 'class-transformer';
 import {getRandomIntInclusive} from './utils';
 

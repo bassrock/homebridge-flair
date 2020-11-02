@@ -7,8 +7,7 @@ import {
 } from 'homebridge';
 
 import {FlairPlatform} from './platform';
-import Client from 'flair-api-ts/lib/client';
-import {FlairMode, Room, Structure, StructureHeatCoolMode} from 'flair-api-ts/lib/client/models';
+import {FlairMode, Room, Structure, StructureHeatCoolMode, Client} from 'flair-api-ts';
 import {getRandomIntInclusive} from './utils';
 
 /**

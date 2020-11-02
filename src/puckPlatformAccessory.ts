@@ -4,8 +4,7 @@ import type {
 } from 'homebridge';
 
 import {FlairPlatform} from './platform';
-import {Puck} from 'flair-api-ts/lib/client/models';
-import Client from 'flair-api-ts/lib/client';
+import {Puck, Client} from 'flair-api-ts';
 import {getRandomIntInclusive} from './utils';
 
 /**
