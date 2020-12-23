@@ -1,12 +1,6 @@
 name: Node.js Package
 
-on:
-  pull_request:
-    branches:
-      - main
-  push:
-    branches:
-      - main
+on: push
 
 jobs:
   build:
@@ -17,6 +11,7 @@ jobs:
       - run: npm install
       - run: npm run build
       - name: Semantic Release
+        if: github.ref == 'refs/heads/main'
         uses: cycjimmy/semantic-release-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
