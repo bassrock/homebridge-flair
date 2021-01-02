@@ -42,7 +42,7 @@
   ],
   "dependencies": {
     "class-transformer": "^0.3.1",
-    "flair-api-ts": "1.0.7",
+    "flair-api-ts": "1.0.13",
     "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
