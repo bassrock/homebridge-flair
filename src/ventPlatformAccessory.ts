@@ -228,7 +228,7 @@ export class FlairVentPlatformAccessory {
 
 
       this.accessoryInformationService.updateCharacteristic(
-        this.platform.Characteristic.FirmwareRevision,
+        String(this.platform.Characteristic.FirmwareRevision),
         this.vent.firmwareVersionS,
       );
 

@@ -79,7 +79,7 @@ export class FlairPuckPlatformAccessory {
       this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.puck.currentHumidity);
 
       this.accessory.getService(this.platform.Service.AccessoryInformation)!
-        .updateCharacteristic(this.platform.Characteristic.FirmwareRevision, this.puck.firmwareVersionS);
+        .updateCharacteristic(String(this.platform.Characteristic.FirmwareRevision), this.puck.firmwareVersionS);
 
       this.platform.log.debug(`Pushed updated current temperature state for ${this.puck.name!} to HomeKit:`, this.puck.currentTemperatureC);
     }
