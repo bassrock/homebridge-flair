@@ -34,13 +34,9 @@ Configuration sample (edit `~/.homebridge/config.json`):
 
 In order to use this plugin you will need to obtain a client id and client secret from Flair. 
 
-Follow the instructions [here](https://documenter.getpostman.com/view/5353571/Rzfnj6YR?version=latest#intro). 
+Start by creating a Flair account at [my.flair.co](https://my.flair.co/) (if you haven't already), then use [this web form to request credentials](https://forms.gle/VohiQjWNv9CAP2ASA).
 
-Specifically you need to:
-1. Create a Flair account with a developer email address at my.flair.co.
-2. Provide this email address to hello@flair.co and they will send you a set of developer credentials.
-
-You will use the client id and secret they send you in the config block above.
+More [API docs and details](https://flair.co/api)
 
 # Auto Vs Manual Mode
 
