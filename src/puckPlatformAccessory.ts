@@ -57,7 +57,6 @@ export class FlairPuckPlatformAccessory {
       this.getNewPuckReadings();
     }
 
-
     async getNewPuckReadings(): Promise<Puck> {
       try {
         const puck = await this.client.getPuckReading(this.puck);
@@ -79,7 +78,7 @@ export class FlairPuckPlatformAccessory {
       this.humidityService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.puck.currentHumidity);
 
       this.accessory.getService(this.platform.Service.AccessoryInformation)!
-        .updateCharacteristic(String(this.platform.Characteristic.FirmwareRevision), this.puck.firmwareVersionS);
+        .updateCharacteristic(this.platform.Characteristic.FirmwareRevision, String(this.puck.firmwareVersionS));
 
       this.platform.log.debug(`Pushed updated current temperature state for ${this.puck.name!} to HomeKit:`, this.puck.currentTemperatureC);
     }

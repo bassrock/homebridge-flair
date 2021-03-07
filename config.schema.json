@@ -41,17 +41,24 @@
         "default": 60
       },
       "hidePuckSensors": {
-        "title": "Hide the puck sensors",
-        "description": "Hides the Puck Sensors and only relies on the Puck Thermostats (Rooms)",
+        "title": "Hide puck sensors",
+        "description": "Hides the Puck Sensors",
         "type": "boolean",
-        "required": true,
+        "required": false,
+        "default": true
+      },
+      "hidePuckRooms": {
+        "title": "Hide room thermostats",
+        "description": "Hides the Puck Rooms (thermostats)",
+        "type": "boolean",
+        "required": false,
         "default": false
       },
       "hideVentTemperatureSensors": {
-        "title": "Hide the vent temperature sensors",
+        "title": "Hide vent temperature sensors",
         "description": "Hides the Vent Temperature Sensors",
         "type": "boolean",
-        "required": true,
+        "required": false,
         "default": false
       },
       "ventAccessoryType": {
