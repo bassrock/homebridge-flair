@@ -71,7 +71,10 @@ export class FlairVentPlatformAccessory {
                     ?? this.accessory.addService(this.platform.Service.WindowCovering);
           this.windowService.getCharacteristic(this.platform.Characteristic.TargetPosition).setProps({
             minStep: 50,
-          });
+          })
+          .on(CharacteristicEventTypes.SET, this.setTargetPosition.bind(this))
+          .on(CharacteristicEventTypes.GET, this.getTargetPosition.bind(this));
+
           this.windowService.getCharacteristic(this.platform.Characteristic.CurrentPosition).setProps({
             minStep: 50,
           });
@@ -81,9 +84,6 @@ export class FlairVentPlatformAccessory {
             this.platform.Characteristic.PositionState,
             this.platform.Characteristic.PositionState.STOPPED,
           );
-          this.windowService.getCharacteristic(this.platform.Characteristic.TargetPosition)
-            .on(CharacteristicEventTypes.SET, this.setTargetPosition.bind(this))
-            .on(CharacteristicEventTypes.GET, this.getTargetPosition.bind(this));
           this.mainService = this.windowService;
           break;
         case AccessoryType.AirPurifier:
@@ -162,12 +162,10 @@ export class FlairVentPlatformAccessory {
      //  * Handle "SET" requests from HomeKit
      //  * These are sent when the user changes the state of an accessory, for example, changing the Brightness
      //  */
-    setTargetPosition(value: CharacteristicValue, callback: CharacteristicSetCallback):void {
+    setTargetPosition(value: CharacteristicValue):void {
       this.client.setVentPercentOpen(this.vent, value as number).then((vent: Vent) => {
         this.updateVentReadingsFromVent(vent);
         this.platform.log.debug('Set Characteristic Percent Open -> ', value);
-        // you must call the callback function
-        callback(null, vent.percentOpen);
       });
 
     }
