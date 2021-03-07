@@ -72,8 +72,8 @@ export class FlairVentPlatformAccessory {
           this.windowService.getCharacteristic(this.platform.Characteristic.TargetPosition).setProps({
             minStep: 50,
           })
-          .on(CharacteristicEventTypes.SET, this.setTargetPosition.bind(this))
-          .on(CharacteristicEventTypes.GET, this.getTargetPosition.bind(this));
+          .onSet(this.setTargetPosition.bind(this))
+          .onGet(this.getTargetPosition.bind(this));
 
           this.windowService.getCharacteristic(this.platform.Characteristic.CurrentPosition).setProps({
             minStep: 50,
@@ -102,8 +102,8 @@ export class FlairVentPlatformAccessory {
             minStep: 50,
           });
           this.airPurifierService.getCharacteristic(this.platform.Characteristic.RotationSpeed)
-            .on(CharacteristicEventTypes.SET, this.setTargetPosition.bind(this))
-            .on(CharacteristicEventTypes.GET, this.getTargetPosition.bind(this));
+            .onSet(this.setTargetPosition.bind(this))
+            .onGet(this.getTargetPosition.bind(this));
           this.mainService = this.airPurifierService;
           break;
         case AccessoryType.Fan:
@@ -122,8 +122,8 @@ export class FlairVentPlatformAccessory {
           });
 
           this.fanService.getCharacteristic(this.platform.Characteristic.RotationSpeed)
-            .on(CharacteristicEventTypes.SET, this.setTargetPosition.bind(this))
-            .on(CharacteristicEventTypes.GET, this.getTargetPosition.bind(this));
+            .onSet(this.setTargetPosition.bind(this))
+            .onGet(this.getTargetPosition.bind(this));
           this.mainService = this.fanService;
           break;
         default:
@@ -162,18 +162,15 @@ export class FlairVentPlatformAccessory {
      //  * Handle "SET" requests from HomeKit
      //  * These are sent when the user changes the state of an accessory, for example, changing the Brightness
      //  */
-    setTargetPosition(value: CharacteristicValue):void {
-      this.client.setVentPercentOpen(this.vent, value as number).then((vent: Vent) => {
-        this.updateVentReadingsFromVent(vent);
-        this.platform.log.debug('Set Characteristic Percent Open -> ', value);
-      });
-
+    async setTargetPosition(value: CharacteristicValue) {
+      const vent: Vent = await this.client.setVentPercentOpen(this.vent, value as number);
+      this.updateVentReadingsFromVent(vent);
+      this.platform.log.debug('Set Characteristic Percent Open -> ', value);
     }
 
-    getTargetPosition(callback: CharacteristicGetCallback):void {
-      this.getNewVentReadings().then((vent: Vent) => {
-        callback(null, vent.percentOpen);
-      });
+    async getTargetPosition(): Promise<CharacteristicValue> {
+      const vent: Vent = await this.getNewVentReadings();
+      return vent.percentOpen
     }
 
     async getNewVentReadings(): Promise<Vent> {
