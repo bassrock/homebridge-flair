@@ -228,8 +228,8 @@ export class FlairVentPlatformAccessory {
 
 
       this.accessoryInformationService.updateCharacteristic(
-        String(this.platform.Characteristic.FirmwareRevision),
-        this.vent.firmwareVersionS,
+        this.platform.Characteristic.FirmwareRevision,
+        String(this.vent.firmwareVersionS),
       );
 
       this.platform.log.debug(`Pushed updated state for vent: ${this.vent.name!} to HomeKit`, {

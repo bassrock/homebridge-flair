@@ -161,12 +161,16 @@ export class FlairPlatform implements DynamicPlatformPlugin {
 
       const promisesToResolve = [
         this.addDevices(await this.client.getVents()),
-        this.addDevices((await this.client.getRooms()).filter((value: Room) => {
-          return value.pucksInactive === 'Active';
-        }) as [Room]),
       ];
 
+      if (!this.config.hidePuckRooms) {
+        promisesToResolve.push(this.addDevices((await this.client.getRooms()).filter((value: Room) => {
+          return value.pucksInactive === 'Active';
+        }) as [Room]));
+      }
+
       if (!this.config.hidePuckSensors) {
+        
         promisesToResolve.push(this.addDevices(await this.client.getPucks()));
       }
 
