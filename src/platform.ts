@@ -21,11 +21,13 @@ export class FlairPlatform implements DynamicPlatformPlugin {
     // this is used to track restored cached accessories
     public readonly accessories: PlatformAccessory[] = [];
 
-    private client: Client;
+    private client?: Client;
 
     private structure?: Structure;
 
     private rooms: [FlairRoomPlatformAccessory?] = []
+    
+    private hasValidConfig: boolean = false;
 
 
     constructor(
@@ -34,9 +36,11 @@ export class FlairPlatform implements DynamicPlatformPlugin {
         public readonly api: API,
     ) {
       this.log.debug('Finished initializing platform:', this.config.name);
+      this.hasValidConfig = this.validConfig();
 
-      if (!this.validConfig()) {
-        throw('The Flair config is no valid.');
+      if (!this.hasValidConfig) {
+        this.log.error('The Flair config is not valid, please ensure your config has all necessary settings.');
+        return;
       }
 
       this.client = new Client(this.config.clientId, this.config.clientSecret, this.config.username, this.config.password);
@@ -46,6 +50,10 @@ export class FlairPlatform implements DynamicPlatformPlugin {
       // in order to ensure they weren't added to homebridge already. This event can also be used
       // to start discovery of new accessories.
       this.api.on(APIEvent.DID_FINISH_LAUNCHING, async () => {
+        if (!this.hasValidConfig) {
+          return;
+        }
+
         log.debug('Executed didFinishLaunching callback');
         // run the method to discover / register your devices as accessories
         await this.discoverDevices();
@@ -83,7 +91,7 @@ export class FlairPlatform implements DynamicPlatformPlugin {
 
     private async getNewStructureReadings() {
       try {
-        const structure = await this.client.getStructure(await this.getStructure());
+        const structure = await this.client!.getStructure(await this.getStructure());
         this.updateStructureFromStructureReading(structure);
       } catch (e) {
         this.log.debug(e);
@@ -101,8 +109,8 @@ export class FlairPlatform implements DynamicPlatformPlugin {
     }
 
     public async setStructureMode(mode: FlairMode, heatingCoolingMode: StructureHeatCoolMode): Promise<Structure> {
-      let structure = await this.client.setStructureMode(await this.getStructure(), mode);
-      structure = await this.client.setStructureHeatingCoolMode(structure, heatingCoolingMode);
+      let structure = await this.client!.setStructureMode(await this.getStructure(), mode);
+      structure = await this.client!.setStructureHeatingCoolMode(structure, heatingCoolingMode);
 
       return this.updateStructureFromStructureReading(structure);
     }
@@ -112,7 +120,7 @@ export class FlairPlatform implements DynamicPlatformPlugin {
         return this.structure!;
       }
       try {
-        this.structure = await this.client.getPrimaryStructure();
+        this.structure = await this.client!.getPrimaryStructure();
       } catch (e) {
         throw('There was an error getting your primary flair home from the api: ' + e.message);
       }
@@ -129,21 +137,25 @@ export class FlairPlatform implements DynamicPlatformPlugin {
      * It should be used to setup event handlers for characteristics and update respective values.
      */
     configureAccessory(accessory: PlatformAccessory):void {
+      if (!this.hasValidConfig) {
+        return;
+      }
+
       this.log.info('Restoring accessory from cache:', accessory.displayName);
 
       if (accessory.context.type === Puck.type) {
         this.log.info('Restoring puck from cache:', accessory.displayName);
         accessory.context.device = plainToClass(Puck, accessory.context.device);
-        new FlairPuckPlatformAccessory(this, accessory, this.client);
+        new FlairPuckPlatformAccessory(this, accessory, this.client!);
       } else if (accessory.context.type === Vent.type) {
         this.log.info('Restoring vent from cache:', accessory.displayName);
         accessory.context.device = plainToClass(Vent, accessory.context.device);
-        new FlairVentPlatformAccessory(this, accessory, this.client);
+        new FlairVentPlatformAccessory(this, accessory, this.client!);
       } else if (accessory.context.type === Room.type) {
         this.log.info('Restoring room from cache:', accessory.displayName);
         accessory.context.device = plainToClass(Room, accessory.context.device);
         this.getStructure().then((structure: Structure) => {
-          this.rooms.push(new FlairRoomPlatformAccessory(this, accessory, this.client, structure));
+          this.rooms.push(new FlairRoomPlatformAccessory(this, accessory, this.client!, structure));
         });
       }
 
@@ -160,18 +172,18 @@ export class FlairPlatform implements DynamicPlatformPlugin {
       let currentUUIDs: string[] = [];
 
       const promisesToResolve = [
-        this.addDevices(await this.client.getVents()),
+        this.addDevices(await this.client!.getVents()),
       ];
 
       if (!this.config.hidePuckRooms) {
-        promisesToResolve.push(this.addDevices((await this.client.getRooms()).filter((value: Room) => {
+        promisesToResolve.push(this.addDevices((await this.client!.getRooms()).filter((value: Room) => {
           return value.pucksInactive === 'Active';
         }) as [Room]));
       }
 
       if (!this.config.hidePuckSensors) {
         
-        promisesToResolve.push(this.addDevices(await this.client.getPucks()));
+        promisesToResolve.push(this.addDevices(await this.client!.getPucks()));
       }
 
       currentUUIDs = currentUUIDs.concat(...await Promise.all(promisesToResolve));
@@ -214,14 +226,14 @@ export class FlairPlatform implements DynamicPlatformPlugin {
           // this is imported from `puckPlatformAccessory.ts`
           if (device instanceof Puck) {
             accessory.context.type = Puck.type;
-            new FlairPuckPlatformAccessory(this, accessory, this.client);
+            new FlairPuckPlatformAccessory(this, accessory, this.client!);
           } else if (device instanceof Vent) {
             accessory.context.type = Vent.type;
-            new FlairVentPlatformAccessory(this, accessory, this.client);
+            new FlairVentPlatformAccessory(this, accessory, this.client!);
           } else if (device instanceof Room) {
             accessory.context.type = Room.type;
             this.getStructure().then((structure: Structure) => {
-              this.rooms.push(new FlairRoomPlatformAccessory(this, accessory, this.client, structure));
+              this.rooms.push(new FlairRoomPlatformAccessory(this, accessory, this.client!, structure));
             });
           } else {
             continue;
