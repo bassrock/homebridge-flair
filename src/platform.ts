@@ -27,7 +27,9 @@ export class FlairPlatform implements DynamicPlatformPlugin {
 
     private rooms: [FlairRoomPlatformAccessory?] = []
     
-    private hasValidConfig: boolean = false;
+    private _hasValidConfig?: boolean;
+
+    private _hasValidCredentials?: boolean;
 
 
     constructor(
@@ -36,12 +38,11 @@ export class FlairPlatform implements DynamicPlatformPlugin {
         public readonly api: API,
     ) {
       this.log.debug('Finished initializing platform:', this.config.name);
-      this.hasValidConfig = this.validConfig();
 
-      if (!this.hasValidConfig) {
-        this.log.error('The Flair config is not valid, please ensure your config has all necessary settings.');
+      if (!this.validConfig()) {
         return;
       }
+
 
       this.client = new Client(this.config.clientId, this.config.clientSecret, this.config.username, this.config.password);
 
@@ -50,11 +51,14 @@ export class FlairPlatform implements DynamicPlatformPlugin {
       // in order to ensure they weren't added to homebridge already. This event can also be used
       // to start discovery of new accessories.
       this.api.on(APIEvent.DID_FINISH_LAUNCHING, async () => {
-        if (!this.hasValidConfig) {
+        if (!this.validConfig()) {
           return;
         }
 
-        log.debug('Executed didFinishLaunching callback');
+        if (!(await this.checkCredentials())) {
+          return;
+        }
+
         // run the method to discover / register your devices as accessories
         await this.discoverDevices();
 
@@ -64,29 +68,54 @@ export class FlairPlatform implements DynamicPlatformPlugin {
       });
     }
 
+    private validConfig(): boolean {
+      if (this._hasValidConfig !== undefined) {
+        return this._hasValidConfig!;
+      }
 
-    private validConfig() {
+      this._hasValidConfig = true;
+
       if (!this.config.clientId) {
         this.log.error('You need to enter a Flair Client Id');
-        return false;
+        this._hasValidConfig = false;
       }
 
       if (!this.config.clientSecret) {
         this.log.error('You need to enter a Flair Client Id');
-        return false;
+        this._hasValidConfig = false;
       }
 
       if (!this.config.username) {
         this.log.error('You need to enter your flair username');
-        return false;
+        this._hasValidConfig = false;
       }
 
       if (!this.config.password) {
         this.log.error('You need to enter your flair password');
-        return false;
+        this._hasValidConfig = false;
       }
 
-      return true;
+      if (this._hasValidConfig === undefined) {
+        this._hasValidConfig = true;
+      }
+
+      return this._hasValidConfig!;
+    }
+
+    private async checkCredentials(): Promise<boolean> {
+      if (this._hasValidCredentials !== undefined) {
+        return this._hasValidCredentials!;
+      }
+
+      this._hasValidCredentials = false;
+
+      try {
+        await this.client!.getUsers();
+        this._hasValidCredentials = true;
+      } catch (e) {
+        this.log.error('Error getting structure readings this is usually incorrect credentials, ensure you entered the right credentials.');
+      }
+      return this._hasValidCredentials;
     }
 
     private async getNewStructureReadings() {
@@ -136,8 +165,12 @@ export class FlairPlatform implements DynamicPlatformPlugin {
      * This function is invoked when homebridge restores cached accessories from disk at startup.
      * It should be used to setup event handlers for characteristics and update respective values.
      */
-    configureAccessory(accessory: PlatformAccessory):void {
-      if (!this.hasValidConfig) {
+    async configureAccessory(accessory: PlatformAccessory): Promise<void> {
+      if (!this.validConfig()) {
+        return;
+      }
+
+      if (!(await this.checkCredentials())) {
         return;
       }
 

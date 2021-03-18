@@ -1,11 +1,8 @@
 import type {
-  CharacteristicGetCallback,
-  CharacteristicSetCallback,
   CharacteristicValue,
   PlatformAccessory,
   Service,
 } from 'homebridge';
-import {CharacteristicEventTypes} from 'homebridge';
 import {FlairPlatform} from './platform';
 import {Vent, Client} from 'flair-api-ts';
 import {getRandomIntInclusive} from './utils';
@@ -72,8 +69,8 @@ export class FlairVentPlatformAccessory {
           this.windowService.getCharacteristic(this.platform.Characteristic.TargetPosition).setProps({
             minStep: 50,
           })
-          .onSet(this.setTargetPosition.bind(this))
-          .onGet(this.getTargetPosition.bind(this));
+            .onSet(this.setTargetPosition.bind(this))
+            .onGet(this.getTargetPosition.bind(this));
 
           this.windowService.getCharacteristic(this.platform.Characteristic.CurrentPosition).setProps({
             minStep: 50,
@@ -162,7 +159,7 @@ export class FlairVentPlatformAccessory {
      //  * Handle "SET" requests from HomeKit
      //  * These are sent when the user changes the state of an accessory, for example, changing the Brightness
      //  */
-    async setTargetPosition(value: CharacteristicValue) {
+    async setTargetPosition(value: CharacteristicValue): Promise<void> {
       const vent: Vent = await this.client.setVentPercentOpen(this.vent, value as number);
       this.updateVentReadingsFromVent(vent);
       this.platform.log.debug('Set Characteristic Percent Open -> ', value);
@@ -170,7 +167,7 @@ export class FlairVentPlatformAccessory {
 
     async getTargetPosition(): Promise<CharacteristicValue> {
       const vent: Vent = await this.getNewVentReadings();
-      return vent.percentOpen
+      return vent.percentOpen;
     }
 
     async getNewVentReadings(): Promise<Vent> {
