@@ -1,4 +1,5 @@
 # homebridge-flair
+[![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
 
 [Flair Smart Vent](https://flair.co/products/vent) plug-in for [Homebridge](https://github.com/nfarina/homebridge) using the Flair API.
 
