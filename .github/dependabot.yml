@@ -13,7 +13,7 @@ updates:
       day: "saturday"
       timezone: "America/Los_Angeles"
     commit-message:
-      prefix: 'fix(depends): '
+      prefix: 'deps(dependabot): '
 
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: 'github-actions'
