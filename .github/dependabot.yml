@@ -8,20 +8,22 @@ updates:
     directory: '/'
     # Check the npm registry for updates every day (weekdays)
     schedule:
-      interval: "weekly"
-      # Check for npm updates on saturdays
-      day: "saturday"
-      timezone: "America/Los_Angeles"
+      interval: "daily"
     commit-message:
-      prefix: 'deps(bot): '
+      #Packaged dependencies (release)
+      prefix: fix
+      #Dev dependencies prefix (no release)
+      prefix-development: chore
+      include: scope
 
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
-      interval: "weekly"
-      # Check for npm updates on saturdays
-      day: "saturday"
-      timezone: "America/Los_Angeles"
+      interval: "daily"
     commit-message:
-      prefix: 'chore(github): '
+      #Packaged dependencies (release)
+      prefix: chore
+      #Dev dependencies prefix (no release)
+      prefix-development: chore
+      include: scope

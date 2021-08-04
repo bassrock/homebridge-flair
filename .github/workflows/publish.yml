@@ -1,20 +1,23 @@
-name: Node.js Package
+name: Publish
 
-on: push
+on:
+  push:
+    branches:
+      - main
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-         node-version: '14'
+          node-version: '16'
       - run: npm install
       - run: npm run build
       - name: Semantic Release
-        if: github.ref == 'refs/heads/main'
         uses: cycjimmy/semantic-release-action@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          # secrets.GITHUB_TOKEN does not have necessary permissions
+          GH_TOKEN: ${{ secrets.SEMENTIC_AND_DEPBOT_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
