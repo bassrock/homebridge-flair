@@ -1,17 +1,23 @@
-# https://github.com/marketplace/actions/dependabot-auto-merge#inputs
+name: Dependabot auto-merge
+on: pull_request_target
 
-name: auto-merge
-
-on:
-  pull_request_target:
+permissions:
+  pull-requests: write
+  contents: write
 
 jobs:
-  auto-merge:
+  dependabot:
     runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' }}
     steps:
-      - uses: actions/checkout@v2
-#      - uses: ahmadnassri/action-dependabot-auto-merge@v2.4
-#        with:
-#          config: .github/auto-merge.yml # Path to configuration file (relative to root)
-#          github-token: ${{ secrets.SEMENTIC_AND_DEPBOT_TOKEN }}
-#          approve: true # Automatically approve pull-requests
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v1.1.0
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Enable auto-merge for Dependabot PRs
+        if: ${{steps.metadata.outputs.update-type == 'version-update:semver-patch'}}
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
