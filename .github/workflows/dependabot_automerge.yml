@@ -1,0 +1,19 @@
+name: Dependabot Automerge
+on:
+  workflow_run:
+    workflows: ["Dependabot PR Check"]
+    types:
+      - completed
+
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ahmadnassri/action-dependabot-auto-merge@v2.4
+        with:
+          config: .github/auto-merge.yml # Path to configuration file (relative to root)
+          github-token: ${{ secrets.SEMENTIC_AND_DEPBOT_TOKEN }}
+          approve: true # Automatically approve pull-requests
