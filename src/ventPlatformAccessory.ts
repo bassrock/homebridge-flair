@@ -7,10 +7,11 @@ import {FlairPlatform} from './platform';
 import {Vent, Client} from 'flair-api-ts';
 import {getRandomIntInclusive} from './utils';
 
-enum AccessoryType {
+export enum VentAccessoryType {
     WindowCovering = 'windowCovering',
     Fan = 'fan',
-    AirPurifier = 'airPurifier'
+    AirPurifier = 'airPurifier',
+    Hidden = 'hidden'
 }
 
 /**
@@ -29,7 +30,7 @@ export class FlairVentPlatformAccessory {
 
     private vent: Vent;
     private client: Client;
-    private accessoryType: AccessoryType;
+    private accessoryType: VentAccessoryType;
 
     constructor(
         private readonly platform: FlairPlatform,
@@ -38,9 +39,9 @@ export class FlairVentPlatformAccessory {
     ) {
       this.vent = this.accessory.context.device;
       this.client = client;
-      this.accessoryType = this.platform.config.ventAccessoryType as AccessoryType;
+      this.accessoryType = this.platform.config.ventAccessoryType as VentAccessoryType;
       if (!this.accessoryType) {
-        this.accessoryType = AccessoryType.WindowCovering;
+        this.accessoryType = VentAccessoryType.WindowCovering;
       }
 
       // set accessory information
@@ -53,9 +54,9 @@ export class FlairVentPlatformAccessory {
       this.windowService = this.accessory.getService(this.platform.Service.WindowCovering);
       this.airPurifierService = this.accessory.getService(this.platform.Service.AirPurifier);
 
-      // We fake a vent as a window covering.
+      // We fake a vent as a any type.
       switch (this.accessoryType) {
-        case AccessoryType.WindowCovering:
+        case VentAccessoryType.WindowCovering:
           if (this.fanService) {
             this.accessory.removeService(this.fanService);
           }
@@ -83,7 +84,7 @@ export class FlairVentPlatformAccessory {
           );
           this.mainService = this.windowService;
           break;
-        case AccessoryType.AirPurifier:
+        case VentAccessoryType.AirPurifier:
           if (this.fanService) {
             this.accessory.removeService(this.fanService);
           }
@@ -103,7 +104,7 @@ export class FlairVentPlatformAccessory {
             .onGet(this.getTargetPosition.bind(this));
           this.mainService = this.airPurifierService;
           break;
-        case AccessoryType.Fan:
+        case VentAccessoryType.Fan:
           if (this.airPurifierService) {
             this.accessory.removeService(this.airPurifierService);
           }
@@ -176,7 +177,7 @@ export class FlairVentPlatformAccessory {
         this.updateVentReadingsFromVent(vent);
         return vent;
       } catch (e) {
-        this.platform.log.debug(e);
+        this.platform.log.debug(e as string);
       }
 
       return this.vent;
@@ -196,7 +197,7 @@ export class FlairVentPlatformAccessory {
 
       // We fake a vent as a window covering.
       switch (this.accessoryType) {
-        case AccessoryType.WindowCovering:
+        case VentAccessoryType.WindowCovering:
           this.mainService.updateCharacteristic(this.platform.Characteristic.TargetPosition, this.vent.percentOpen);
           this.mainService.updateCharacteristic(this.platform.Characteristic.CurrentPosition, this.vent.percentOpen);
           this.mainService.updateCharacteristic(
@@ -204,12 +205,12 @@ export class FlairVentPlatformAccessory {
             this.platform.Characteristic.PositionState.STOPPED,
           );
           break;
-        case AccessoryType.AirPurifier:
+        case VentAccessoryType.AirPurifier:
           this.mainService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, this.vent.percentOpen);
           this.mainService.updateCharacteristic(this.platform.Characteristic.Active, this.vent.percentOpen > 0);
           this.mainService.updateCharacteristic(this.platform.Characteristic.CurrentAirPurifierState, this.vent.percentOpen > 0);
           break;
-        case AccessoryType.Fan:
+        case VentAccessoryType.Fan:
           this.mainService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, this.vent.percentOpen);
           this.mainService.updateCharacteristic(this.platform.Characteristic.Active, this.vent.percentOpen > 0);
           break;

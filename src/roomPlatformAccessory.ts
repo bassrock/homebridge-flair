@@ -73,23 +73,23 @@ export class FlairRoomPlatformAccessory {
 
     setTargetHeatingCoolingState(value: CharacteristicValue, callback: CharacteristicSetCallback):void {
       if (value === this.platform.Characteristic.TargetHeatingCoolingState.OFF) {
-        this.platform.setStructureMode(FlairMode.MANUAL, StructureHeatCoolMode.COOL).then((structure: Structure) => {
-          callback(null, value);
+        this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.OFF).then((structure: Structure) => {
+          callback(null);
           this.updateFromStructure(structure);
         });
       } else if(value === this.platform.Characteristic.TargetHeatingCoolingState.COOL) {
         this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.COOL).then((structure: Structure) => {
-          callback(null, value);
+          callback(null);
           this.updateFromStructure(structure);
         });
       } else if(value === this.platform.Characteristic.TargetHeatingCoolingState.HEAT) {
         this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.HEAT).then((structure: Structure) => {
-          callback(null, value);
+          callback(null);
           this.updateFromStructure(structure);
         });
       } else if(value === this.platform.Characteristic.TargetHeatingCoolingState.AUTO) {
         this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.AUTO).then((structure: Structure) => {
-          callback(null, this.platform.Characteristic.TargetHeatingCoolingState.AUTO);
+          callback(null);
           this.updateFromStructure(structure);
         });
       }
@@ -102,7 +102,7 @@ export class FlairRoomPlatformAccessory {
         this.updateRoomReadingsFromRoom(room);
         this.platform.log.debug('Set Characteristic Temperature -> ', value);
         // you must call the callback function
-        callback(null, room.setPointC);
+        callback(null);
       });
 
     }
@@ -120,7 +120,7 @@ export class FlairRoomPlatformAccessory {
         this.updateRoomReadingsFromRoom(room);
         return room;
       } catch (e) {
-        this.platform.log.debug(e);
+        this.platform.log.debug(e as string);
       }
 
       return this.room;
@@ -162,7 +162,7 @@ export class FlairRoomPlatformAccessory {
     }
 
     private getCurrentHeatingCoolingStateFromStructure(structure: Structure) {
-      if (structure.mode === FlairMode.MANUAL) {
+      if (structure.structureHeatCoolMode === StructureHeatCoolMode.OFF) {
         return this.platform.Characteristic.CurrentHeatingCoolingState.OFF;
       }
 
@@ -182,7 +182,7 @@ export class FlairRoomPlatformAccessory {
 
 
     private getTargetHeatingCoolingStateFromStructure(structure: Structure) {
-      if (structure.mode === FlairMode.MANUAL) {
+      if (structure.structureHeatCoolMode === StructureHeatCoolMode.OFF) {
         return this.platform.Characteristic.TargetHeatingCoolingState.OFF;
       }
 

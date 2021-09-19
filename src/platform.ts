@@ -9,7 +9,7 @@ import type {
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { FlairPuckPlatformAccessory } from './puckPlatformAccessory';
-import { FlairVentPlatformAccessory } from './ventPlatformAccessory';
+import {FlairVentPlatformAccessory, VentAccessoryType} from './ventPlatformAccessory';
 import { FlairRoomPlatformAccessory } from './roomPlatformAccessory';
 import {
   Puck,
@@ -113,10 +113,6 @@ export class FlairPlatform implements DynamicPlatformPlugin {
       this._hasValidConfig = false;
     }
 
-    if (this._hasValidConfig === undefined) {
-      this._hasValidConfig = true;
-    }
-
     return this._hasValidConfig!;
   }
 
@@ -144,7 +140,7 @@ export class FlairPlatform implements DynamicPlatformPlugin {
       );
       this.updateStructureFromStructureReading(structure);
     } catch (e) {
-      this.log.debug(e);
+      this.log.debug(e as string);
     }
   }
 
@@ -183,7 +179,7 @@ export class FlairPlatform implements DynamicPlatformPlugin {
     } catch (e) {
       throw (
         'There was an error getting your primary flair home from the api: ' +
-        e.message
+        (e as Error).message
       );
     }
 
@@ -204,6 +200,14 @@ export class FlairPlatform implements DynamicPlatformPlugin {
     }
 
     if (!(await this.checkCredentials())) {
+      return;
+    }
+
+    if (accessory.context.type === Vent.type && this.config.ventAccessoryType === VentAccessoryType.Hidden) {
+      this.log.info('Removing vent accessory from cache since vents are now hidden:', accessory.displayName);
+      this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+        accessory,
+      ]);
       return;
     }
 
@@ -244,7 +248,11 @@ export class FlairPlatform implements DynamicPlatformPlugin {
   async discoverDevices(): Promise<void> {
     let currentUUIDs: string[] = [];
 
-    const promisesToResolve = [this.addDevices(await this.client!.getVents())];
+    const promisesToResolve: [Promise<string[]>?] = [];
+
+    if (this.config.ventAccessoryType !== VentAccessoryType.Hidden) {
+      promisesToResolve.push(this.addDevices(await this.client!.getVents()));
+    }
 
     if (!this.config.hidePuckRooms) {
       promisesToResolve.push(
@@ -260,9 +268,16 @@ export class FlairPlatform implements DynamicPlatformPlugin {
       promisesToResolve.push(this.addDevices(await this.client!.getPucks()));
     }
 
-    currentUUIDs = currentUUIDs.concat(
-      ...(await Promise.all(promisesToResolve)),
-    );
+    const uuids : (string[] | undefined)[] = await Promise.all(promisesToResolve);
+    if (uuids.length === 0) {
+      for (const accessory of this.accessories) {
+        //we have no devices so we remove them all.
+        delete this.accessories[this.accessories.indexOf(accessory, 0)];
+        this.log.debug('Removing not found device:', accessory.displayName);
+      }
+    }
+
+    currentUUIDs = currentUUIDs.concat(...uuids as string[][]);
 
     //Loop over the current uuid's and if they don't exist then remove them.
     for (const accessory of this.accessories) {
@@ -323,6 +338,7 @@ export class FlairPlatform implements DynamicPlatformPlugin {
         this.log.info(
           `Registering new ${accessory.context.type}`,
           device.name!,
+
         );
 
         // link the accessory to your platform

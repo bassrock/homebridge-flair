@@ -85,6 +85,12 @@
             "enum": [
               "airPurifier"
             ]
+          },
+          {
+            "title": "Hidden (if you just want to use Flair Auto with Rooms)",
+            "enum": [
+              "hidden"
+            ]
           }
         ]
       }

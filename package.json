@@ -42,7 +42,7 @@
   ],
   "dependencies": {
     "class-transformer": "^0.4.0",
-    "flair-api-ts": "^1.0.14",
+    "flair-api-ts": "^1.0.26",
     "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
@@ -56,7 +56,6 @@
     "@typescript-eslint/eslint-plugin": "^4.11.0",
     "@typescript-eslint/parser": "^4.11.0",
     "eslint": "^7.16.0",
-    "homebridge": "^1.1.7",
     "nodemon": "^2.0.6",
     "rimraf": "^3.0.2",
     "ts-node": "^10.1.0",
