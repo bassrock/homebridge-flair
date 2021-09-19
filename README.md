@@ -41,7 +41,9 @@ More [API docs and details](https://flair.co/api)
 
 # Auto Vs Manual Mode
 
-When you use Pucks with your setup the pucks will appear in the app as a Thermostat. If you turn those thermostats off it will put the Flair system into Manual mode. If you turn the thermostat to any other setting it will set your system to Flair's Auto mode.
+When you use Pucks with your setup the pucks will appear in the app as a Thermostat. 
+
+~~If you turn those thermostats off it will put the Flair system into Manual mode. If you turn the thermostat to any other setting it will set your system to Flair's Auto mode.~~ As of Version 2.0.0 homekit does not do any switching from Auto to Manual mode. This must be done through the flair app, the Puck thermostats now respect the "off" setting.
 
 # Vent Accessory Type
 
@@ -50,6 +52,7 @@ You can specify how vent accessories are shown in HomeKit with the `ventAccessor
 `windowCovering` - Window Covering
 `fan` - Fan
 `airPurifier` - Air Purifier
+`hidden` - Hidden, this is useful if you have a puck in each room and want to only expose the room "thermostats"
 
 
 ### Commit format
