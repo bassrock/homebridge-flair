@@ -43,7 +43,7 @@ More [API docs and details](https://flair.co/api)
 
 When you use Pucks with your setup the pucks will appear in the app as a Thermostat. 
 
-~~If you turn those thermostats off it will put the Flair system into Manual mode. If you turn the thermostat to any other setting it will set your system to Flair's Auto mode.~~ As of Version 2.0.0 homekit does not do any switching from Auto to Manual mode. This must be done through the flair app, the Puck thermostats now respect the "off" setting.
+~~If you turn those thermostats off it will put the Flair system into Manual mode. If you turn the thermostat to any other setting it will set your system to Flair's Auto mode.~~ As of Version 1.3.0 homekit does not do any switching from Auto to Manual mode. This must be done through the flair app, the Puck thermostats now respect the "off" setting.
 
 # Vent Accessory Type
 
