@@ -54,6 +54,13 @@
         "required": false,
         "default": false
       },
+      "hidePrimaryStructure": {
+        "title": "Hide primary structure",
+        "description": "Hides the primary structure thermostat",
+        "type": "boolean",
+        "required": false,
+        "default": true
+      },
       "hideVentTemperatureSensors": {
         "title": "Hide vent temperature sensors",
         "description": "Hides the Vent Temperature Sensors",

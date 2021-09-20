@@ -23,6 +23,7 @@ import {
 } from 'flair-api-ts';
 import { plainToClass } from 'class-transformer';
 import { getRandomIntInclusive } from './utils';
+import {FlairStructurePlatformAccessory} from './structurePlatformAccessory';
 
 /**
  * HomebridgePlatform
@@ -38,9 +39,11 @@ export class FlairPlatform implements DynamicPlatformPlugin {
 
   private client?: Client;
 
-  private structure?: Structure;
+  public structure?: Structure;
 
   private rooms: [FlairRoomPlatformAccessory?] = [];
+
+  private primaryStructureAccessory?: FlairStructurePlatformAccessory;
 
   private _hasValidConfig?: boolean;
 
@@ -151,6 +154,9 @@ export class FlairPlatform implements DynamicPlatformPlugin {
         room.updateFromStructure(this.structure);
       }
     }
+    if (this.primaryStructureAccessory) {
+      this.primaryStructureAccessory.updateFromStructure(this.structure);
+    }
     return this.structure;
   }
 
@@ -234,6 +240,10 @@ export class FlairPlatform implements DynamicPlatformPlugin {
           ),
         );
       });
+    } else if (accessory.context.type === Structure.type) {
+      this.log.info('Restoring structure from cache:', accessory.displayName);
+      accessory.context.device = plainToClass(Structure, accessory.context.device);
+      this.primaryStructureAccessory = new FlairStructurePlatformAccessory(this, accessory, this.client!);
     }
 
     // add the restored accessory to the accessories cache so we can track if it has already been registered
@@ -252,6 +262,10 @@ export class FlairPlatform implements DynamicPlatformPlugin {
 
     if (this.config.ventAccessoryType !== VentAccessoryType.Hidden) {
       promisesToResolve.push(this.addDevices(await this.client!.getVents()));
+    }
+
+    if (!this.config.hidePrimaryStructure) {
+      promisesToResolve.push(this.addDevices([await this.client!.getPrimaryStructure()]));
     }
 
     if (!this.config.hidePuckRooms) {
@@ -332,6 +346,13 @@ export class FlairPlatform implements DynamicPlatformPlugin {
               ),
             );
           });
+        } else if (device instanceof Structure) {
+          accessory.context.type = Structure.type;
+          this.primaryStructureAccessory = new FlairStructurePlatformAccessory(
+            this,
+            accessory,
+              this.client!,
+          );
         } else {
           continue;
         }
