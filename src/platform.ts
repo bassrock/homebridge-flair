@@ -211,12 +211,14 @@ export class FlairPlatform implements DynamicPlatformPlugin {
 
     if (accessory.context.type === Vent.type && this.config.ventAccessoryType === VentAccessoryType.Hidden) {
       this.log.info('Removing vent accessory from cache since vents are now hidden:', accessory.displayName);
-      this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+      await this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
         accessory,
       ]);
       return;
     }
 
+    // add the restored accessory to the accessories cache so we can track if it has already been registered
+    this.accessories.push(accessory);
     this.log.info('Restoring accessory from cache:', accessory.displayName);
 
     if (accessory.context.type === Puck.type) {
@@ -230,24 +232,20 @@ export class FlairPlatform implements DynamicPlatformPlugin {
     } else if (accessory.context.type === Room.type) {
       this.log.info('Restoring room from cache:', accessory.displayName);
       accessory.context.device = plainToClass(Room, accessory.context.device);
-      this.getStructure().then((structure: Structure) => {
-        this.rooms.push(
-          new FlairRoomPlatformAccessory(
-            this,
-            accessory,
-            this.client!,
-            structure,
-          ),
-        );
-      });
+      const structure = await this.getStructure();
+      this.rooms.push(
+        new FlairRoomPlatformAccessory(
+          this,
+          accessory,
+              this.client!,
+              structure,
+        ),
+      );
     } else if (accessory.context.type === Structure.type) {
       this.log.info('Restoring structure from cache:', accessory.displayName);
       accessory.context.device = plainToClass(Structure, accessory.context.device);
       this.primaryStructureAccessory = new FlairStructurePlatformAccessory(this, accessory, this.client!);
     }
-
-    // add the restored accessory to the accessories cache so we can track if it has already been registered
-    this.accessories.push(accessory);
   }
 
   /**
@@ -283,20 +281,13 @@ export class FlairPlatform implements DynamicPlatformPlugin {
     }
 
     const uuids : (string[] | undefined)[] = await Promise.all(promisesToResolve);
-    if (uuids.length === 0) {
-      for (const accessory of this.accessories) {
-        //we have no devices so we remove them all.
-        delete this.accessories[this.accessories.indexOf(accessory, 0)];
-        this.log.debug('Removing not found device:', accessory.displayName);
-      }
-    }
 
     currentUUIDs = currentUUIDs.concat(...uuids as string[][]);
 
     //Loop over the current uuid's and if they don't exist then remove them.
     for (const accessory of this.accessories) {
-      if (!currentUUIDs.find((uuid) => uuid === accessory.UUID)) {
-        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+      if (currentUUIDs.length === 0 || !currentUUIDs.find((uuid) => uuid === accessory.UUID)) {
+        await this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
           accessory,
         ]);
         delete this.accessories[this.accessories.indexOf(accessory, 0)];
@@ -336,16 +327,15 @@ export class FlairPlatform implements DynamicPlatformPlugin {
           new FlairVentPlatformAccessory(this, accessory, this.client!);
         } else if (device instanceof Room) {
           accessory.context.type = Room.type;
-          this.getStructure().then((structure: Structure) => {
-            this.rooms.push(
-              new FlairRoomPlatformAccessory(
-                this,
-                accessory,
+          const structure = await this.getStructure();
+          this.rooms.push(
+            new FlairRoomPlatformAccessory(
+              this,
+              accessory,
                 this.client!,
                 structure,
-              ),
-            );
-          });
+            ),
+          );
         } else if (device instanceof Structure) {
           accessory.context.type = Structure.type;
           this.primaryStructureAccessory = new FlairStructurePlatformAccessory(
@@ -359,7 +349,6 @@ export class FlairPlatform implements DynamicPlatformPlugin {
         this.log.info(
           `Registering new ${accessory.context.type}`,
           device.name!,
-
         );
 
         // link the accessory to your platform
