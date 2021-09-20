@@ -7,7 +7,7 @@ import {
 } from 'homebridge';
 
 import {FlairPlatform} from './platform';
-import {FlairMode, Room, Structure, StructureHeatCoolMode, Client} from 'flair-api-ts';
+import {Room, Structure, StructureHeatCoolMode, Client} from 'flair-api-ts';
 import {getRandomIntInclusive} from './utils';
 
 /**
@@ -80,19 +80,19 @@ export class FlairRoomPlatformAccessory {
         });
       } else if (value === this.platform.Characteristic.TargetHeatingCoolingState.COOL) {
         this.setRoomActive();
-        this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.COOL).then((structure: Structure) => {
+        this.platform.setStructureMode(StructureHeatCoolMode.COOL).then((structure: Structure) => {
           callback(null);
           this.updateFromStructure(structure);
         });
       } else if (value === this.platform.Characteristic.TargetHeatingCoolingState.HEAT) {
         this.setRoomActive();
-        this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.HEAT).then((structure: Structure) => {
+        this.platform.setStructureMode(StructureHeatCoolMode.HEAT).then((structure: Structure) => {
           callback(null);
           this.updateFromStructure(structure);
         });
       } else if (value === this.platform.Characteristic.TargetHeatingCoolingState.AUTO) {
         this.setRoomActive();
-        this.platform.setStructureMode(FlairMode.AUTO, StructureHeatCoolMode.AUTO).then((structure: Structure) => {
+        this.platform.setStructureMode(StructureHeatCoolMode.AUTO).then((structure: Structure) => {
           callback(null);
           this.updateFromStructure(structure);
         });
@@ -103,7 +103,7 @@ export class FlairRoomPlatformAccessory {
       if (this.room.active) {
         return;
       }
-      this.client.setRoomAway(this.room, false).then((room: Room) => {
+      this.client.setRoomAway(this.room, false).then(() => {
         this.platform.log.debug('Set Room to active');
       });
     }

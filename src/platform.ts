@@ -16,7 +16,6 @@ import {
   Vent,
   Room,
   Structure,
-  FlairMode,
   StructureHeatCoolMode,
   Client,
   Model,
@@ -161,15 +160,10 @@ export class FlairPlatform implements DynamicPlatformPlugin {
   }
 
   public async setStructureMode(
-    mode: FlairMode,
     heatingCoolingMode: StructureHeatCoolMode,
   ): Promise<Structure> {
-    let structure = await this.client!.setStructureMode(
+    const structure = await this.client!.setStructureHeatingCoolMode(
       await this.getStructure(),
-      mode,
-    );
-    structure = await this.client!.setStructureHeatingCoolMode(
-      structure,
       heatingCoolingMode,
     );
 
