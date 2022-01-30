@@ -1,0 +1,14 @@
+{
+  "extends": [
+    "config:base",
+    "group:recommended"
+  ],
+  "labels": ["dependencies"],
+  "suppressNotifications": ["prIgnoreNotification"],
+  "packageRules": [
+    {
+      "matchDatasources": ["npm"],
+      "stabilityDays": 3
+    }
+  ]
+}
