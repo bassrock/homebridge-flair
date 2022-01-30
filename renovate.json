@@ -4,11 +4,25 @@
     "group:recommended"
   ],
   "labels": ["dependencies"],
+  "pinDigests": true,
+  "platformAutomerge": true,
   "suppressNotifications": ["prIgnoreNotification"],
   "packageRules": [
     {
+      "matchDatasources": ["docker"],
+      "labels": ["docker-update"]
+    },
+    {
       "matchDatasources": ["npm"],
       "stabilityDays": 3
+    },
+    {
+      "matchUpdateTypes": ["patch", "pin", "digest"],
+      "automerge": true
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "automerge": true
     }
   ]
 }
