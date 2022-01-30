@@ -1,12 +1,9 @@
 name: Publish
 
 on:
-  workflow_run:
-
-    workflows:
-      - "Pre Publish Code"
-    types:
-      - completed
+  push:
+    branches:
+      - main
 
 
 jobs:
