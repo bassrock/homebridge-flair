@@ -46,11 +46,11 @@
     "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
-    "@semantic-release/changelog": "1.0.0",
-    "@semantic-release/commit-analyzer": "5.1.0",
-    "@semantic-release/git": "3.0.0",
+    "@semantic-release/changelog": "6.0.1",
+    "@semantic-release/commit-analyzer": "9.0.2",
+    "@semantic-release/git": "10.0.1",
     "@semantic-release/github": "8.0.2",
-    "@semantic-release/npm": "8.0.3",
+    "@semantic-release/npm": "9.0.0",
     "@semantic-release/release-notes-generator": "10.0.3",
     "@types/node": "17.0.10",
     "@typescript-eslint/eslint-plugin": "5.10.1",
