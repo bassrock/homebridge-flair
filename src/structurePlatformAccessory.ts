@@ -96,7 +96,12 @@ export class FlairStructurePlatformAccessory {
   }
 
   getTargetTemperature(callback: CharacteristicGetCallback): void {
-    callback(null, this.platform.structure ? this.platform.structure!.setPointTemperatureC : 0);
+    let value = this.platform.structure ? this.platform.structure!.setPointTemperatureC : 0;
+    if (!value) {
+      value = 15;
+      this.platform.log.debug('Structure did not have setpoint value, setting to default -> ', value);
+    }
+    callback(null, value);
   }
 
   public updateFromStructure(structure: Structure): void {
