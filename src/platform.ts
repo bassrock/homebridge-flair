@@ -101,17 +101,14 @@ export class FlairPlatform implements DynamicPlatformPlugin {
     }
 
     if (!this.config.clientSecret) {
-      this.log.error('You need to enter a Flair Client Id');
+      this.log.error('You need to enter a Flair Client Secret');
       this._hasValidConfig = false;
     }
 
-    if (!this.config.username) {
-      this.log.error('You need to enter your flair username');
-      this._hasValidConfig = false;
-    }
-
-    if (!this.config.password) {
-      this.log.error('You need to enter your flair password');
+    // Username and password are only used with legacy credentials, so they are
+    // optional. If one is set, both must be.
+    if (!!this.config.username !== !!this.config.password) {
+      this.log.error('You need to enter both your flair username and password, or neither');
       this._hasValidConfig = false;
     }
 
@@ -129,7 +126,8 @@ export class FlairPlatform implements DynamicPlatformPlugin {
     } catch (e) {
       this._hasValidCredentials = false;
       this.log.error(
-        'Error getting structure readings this is usually incorrect credentials, ensure you entered the right credentials.',
+        'Error getting structure readings this is usually incorrect credentials, ensure you entered the right credentials. ' +
+        'Use the Client ID and Client Secret shown in the Flair app under Account Settings > Developer Settings.',
       );
     }
     return this._hasValidCredentials;

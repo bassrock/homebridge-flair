@@ -21,8 +21,6 @@ Configuration sample (edit `~/.homebridge/config.json`):
         {
             "clientId": "client_id",
             "clientSecret": "client_secret",
-            "username": "user",
-            "password": "pass",
             "pollInterval": 60,
             "platform": "Flair",
             "ventAccessoryType": "windowCovering"
@@ -33,9 +31,11 @@ Configuration sample (edit `~/.homebridge/config.json`):
 
 # Obtaining Credentials
 
-In order to use this plugin you will need to obtain a client id and client secret from Flair. 
+In order to use this plugin you will need a client id and client secret from Flair.
 
-Start by creating a Flair account at [my.flair.co](https://my.flair.co/) (if you haven't already), then use [this web form to request credentials](https://forms.gle/VohiQjWNv9CAP2ASA).
+Start by creating a Flair account at [my.flair.co](https://my.flair.co/) (if you haven't already). Then, in the Flair app, open **Account Settings** and scroll to **Developer Settings**: the **Client ID** and **Client Secret** shown there are the values for `clientId` and `clientSecret`. No username or password is needed with these credentials.
+
+If you have older (legacy) credentials that Flair Support sent you, those still work: also set `username` and `password` to your Flair login.
 
 More [API docs and details](https://flair.co/api)
 
